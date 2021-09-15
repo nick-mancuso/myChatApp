@@ -275,13 +275,14 @@ ul {
     width: 100%;
     align-self: flex-end;
     bottom: 0;
-    background: white;
+    background: grey;
 }
 
 .current-user-container {
     font-family: sans-serif;
     font-size: 11pt;
     padding: 4px;
+    color: lightgrey;
 }
 
 /* Begin user list */
