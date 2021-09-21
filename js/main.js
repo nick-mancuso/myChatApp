@@ -16,12 +16,85 @@ const firebaseConfig = {
     appId: "1:164333713364:web:30280ad323df5e5c6a4841",
     measurementId: "G-HSB29G8SYD"
 };
+
 const app = initializeApp(firebaseConfig);
 const allChannelsPrefix = "channels/";
 
-let userName = "Donny";
-let screenName = "Donny Kerabatsos";
+const db = getDatabase();
+const allChannelsRef = ref(db, allChannelsPrefix);
+let channelRef = ref(db, allChannelsPrefix + channelName);
+
+// let userName = "Donny";
+// let screenName = "Donny Kerabatsos";
 let channelName = "general";
+
+let owner = {
+    "username": "Donny",
+    "ownerID": "asdf123",
+    "avatarSrc": "//gravatar.com/avatar/00034587632094500000000000000000?d=retro"
+};
+
+/** Initial setup */
+// add event listener for  channels list
+onChildAdded(allChannelsRef, channel => addChannel(channel));
+
+// add event listener for messages in current channel
+onChildAdded(channelRef, data => addMessage(data));
+
+
+// let message = {
+//     "msgIDHERE" : {
+//         "history" : {
+//             "uuid" : "adfsdff"
+//         },
+//         "msg" : "This is a message",
+//         "ownerID" : "longID",
+//         "reactions" : "later",
+//         "time" : "mytime",
+//         "userDisplay" : "nick"
+//     }
+// };
+
+function sendMessage() {
+    const text = getInputText();
+    const date = new Date();
+    const time = date.getTime();
+
+    let message = {
+        "history" : { },
+        "msg" : text,
+        "ownerID" : owner.ownerID,
+        "reactions" : "",
+        "time" : time,
+        "userDisplay" : owner.username
+    };
+
+    const newMessageRef = push(channelRef);
+    set(newMessageRef, message);
+    clearInputBox();
+}
+
+function getInputText() {
+    const inputBox = document.getElementById("inputBox");
+    return inputBox.value();
+}
+
+function clearInputBox() {
+    const inputBox = document.getElementById("inputBox");
+    // TODO: clear input box
+}
+
+function addMessage(data) {
+    const messageList = document.getElementById("messageList");
+
+    // TODO: implement other elements
+    // below constant might need to just be data, not data.val()
+    const { msgID : { history : { uuid }, msg, ownerID, reactions, time, userDisplay } } = data;
+    messageList.insertAdjacentHTML('beforeend', createMessageHTML(
+        "//gravatar.com/avatar/00034587632094500000000000000000?d=retro",
+        msg, userDisplay, time
+    ));
+}
 
 function createMessageHTML(avatarSrc, text, name, timestamp) {
     return `
@@ -49,16 +122,23 @@ function createMessageHTML(avatarSrc, text, name, timestamp) {
         </article>    
     `;
 }
-function createChannelHTML(channel) {
+
+function addChannel(channel) {
+    const channelList = document.getElementById("channelList");
+    channelList.insertAdjacentHTML('beforeend', createChannelHTML(channel.key))
+}
+
+function createChannelHTML(channelName) {
     return `
         <div class="channel-container">
             <i class="fa fa-hashtag" id="channel-hashtag"></i>
             <p class="channel-name">
-               ${channel}
+               ${channelName}
             </p>
         </div>
     `;
 }
+
 function createCurrentUserHTML(avatarSrc, name) {
     return `
         <div class="current-user-container">
@@ -66,7 +146,4 @@ function createCurrentUserHTML(avatarSrc, name) {
             ${name}
         </div>
     `;
-}
-function getInputText() {
-
 }

@@ -28,8 +28,8 @@
             <main class="main">
                 <!-- Lots of inspiration from https://codepen.io/villa7/pen/yOMZoB -->
                 <section class="chat-box">
-                    <section class="chat-window">
-                        <article class="msg-container msg-remote" >
+                    <section class="chat-window" id="messageList">
+                        <article class="msg-container msg-remote">
                             <div class="msg-box">
                                 <img class="user-img"
                                      src="//gravatar.com/avatar/00034587632094500000000000000000?d=retro" alt=""/>
@@ -39,8 +39,18 @@
                                             That rug really held the room together, man.
                                         </p>
                                     </div>
-                                    <span class="timestamp"><span class="username">The Dude</span>&bull;<span
-                                            class="posttime">3 minutes ago</span></span>
+                                    <span class="timestamp">
+                                        <span class="username">
+                                        The Dude
+                                        </span>
+                                        &bull;
+                                        <span class="posttime">
+                                            3 minutes ago
+                                        </span>
+                                    </span>
+                                    <span class="reactions">
+                                        <i class="fas fa-angry"></i>
+                                    </span>
                                 </div>
                             </div>
                         </article>
@@ -175,7 +185,7 @@
                     </section>
                     <form class="chat-input" onsubmit="return false;">
                         <label>
-                            <input type="text" autocomplete="on" placeholder="Type a message"/>
+                            <input id="inputBox" type="text" autocomplete="on" placeholder="Type a message"/>
                         </label>
                         <button id="send-button">
                             <i class='fa fa-angle-right'></i>
@@ -186,14 +196,14 @@
             <!-- End main chat area -->
             <!-- Begin channel list-->
             <aside class="sidebar-first">
-                <div class="channel-list">
+                <div class="channel-list" id="channelList">
                     <div id="channels-header">TEXT CHANNELS</div>
-                        <div class="channel-container">
-                            <i class="fa fa-hashtag" id="channel-hashtag"></i>
-                            <p class="channel-name">
-                               my-new-channel
-                            </p>
-                        </div>
+                    <div class="channel-container">
+                        <i class="fa fa-hashtag" id="channel-hashtag"></i>
+                        <p class="channel-name">
+                           my-new-channel
+                        </p>
+                    </div>
                 </div>
                 <div class="current-user-info">
                     <div class="current-user-container">
