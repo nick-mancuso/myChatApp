@@ -22,11 +22,11 @@ const allChannelsPrefix = "channels/";
 
 const db = getDatabase();
 const allChannelsRef = ref(db, allChannelsPrefix);
+let channelName = "general";
 let channelRef = ref(db, allChannelsPrefix + channelName);
 
 // let userName = "Donny";
 // let screenName = "Donny Kerabatsos";
-let channelName = "general";
 
 let owner = {
     "username": "Donny",
@@ -68,7 +68,6 @@ function sendMessage() {
         "time" : time,
         "userDisplay" : owner.username
     };
-
     const newMessageRef = push(channelRef);
     set(newMessageRef, message);
     clearInputBox();
@@ -76,11 +75,12 @@ function sendMessage() {
 
 function getInputText() {
     const inputBox = document.getElementById("inputBox");
-    return inputBox.value();
+    return inputBox.value;
 }
 
 function clearInputBox() {
     const inputBox = document.getElementById("inputBox");
+    inputBox.value = "";
     // TODO: clear input box
 }
 
@@ -89,11 +89,15 @@ function addMessage(data) {
 
     // TODO: implement other elements
     // below constant might need to just be data, not data.val()
-    const { msgID : { history : { uuid }, msg, ownerID, reactions, time, userDisplay } } = data;
+    // console.log(data.val());
+
+    const { history, msg, ownerID, reactions, time, userDisplay } = data.val();
     messageList.insertAdjacentHTML('beforeend', createMessageHTML(
         "//gravatar.com/avatar/00034587632094500000000000000000?d=retro",
         msg, userDisplay, time
     ));
+    // scroll to bottom
+    messageList.scrollTop = messageList.scrollHeight;
 }
 
 function createMessageHTML(avatarSrc, text, name, timestamp) {
@@ -147,3 +151,93 @@ function createCurrentUserHTML(avatarSrc, name) {
         </div>
     `;
 }
+
+function createLoginSignupHTML() {
+    return `
+    <div class="form">
+      
+      <ul class="tab-group">
+        <li class="tab active"><a href="#signup">Sign Up</a></li>
+        <li class="tab"><a href="#login">Log In</a></li>
+      </ul>
+      
+      <div class="tab-content">
+        <div id="signup">   
+          <h1>Sign Up for Free</h1>
+          
+          <form action="/" method="post">
+          
+          <div class="top-row">
+            <div class="field-wrap">
+              <label>
+                First Name<span class="req">*</span>
+              </label>
+              <input type="text" required autocomplete="off" />
+            </div>
+        
+            <div class="field-wrap">
+              <label>
+                Last Name<span class="req">*</span>
+              </label>
+              <input type="text"required autocomplete="off"/>
+            </div>
+          </div>
+
+          <div class="field-wrap">
+            <label>
+              Email Address<span class="req">*</span>
+            </label>
+            <input type="email"required autocomplete="off"/>
+          </div>
+          
+          <div class="field-wrap">
+            <label>
+              Set A Password<span class="req">*</span>
+            </label>
+            <input type="password"required autocomplete="off"/>
+          </div>
+          
+          <button type="submit" class="button button-block"/>Get Started</button>
+          
+          </form>
+
+        </div>
+        
+        <div id="login">   
+          <h1>Welcome Back!</h1>
+          
+          <form action="/" method="post">
+          
+            <div class="field-wrap">
+            <label>
+              Email Address<span class="req">*</span>
+            </label>
+            <input type="email"required autocomplete="off"/>
+          </div>
+          
+          <div class="field-wrap">
+            <label>
+              Password<span class="req">*</span>
+            </label>
+            <input type="password"required autocomplete="off"/>
+          </div>
+          
+          <p class="forgot"><a href="#">Forgot Password?</a></p>
+          
+          <button class="button button-block"/>Log In</button>
+          
+          </form>
+
+        </div>
+        
+      </div><!-- tab-content -->
+      
+</div> <!-- /form -->
+    
+    `;
+}
+
+// setup listeners
+document.getElementById("send-button").addEventListener("click", e => {
+    sendMessage();
+})
