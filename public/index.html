@@ -13,10 +13,14 @@
     <script src="js/bootstrap.js"></script>
     <script type="module" src="js/main.js"></script>
     <script src="https://use.fontawesome.com/cd8ee9ed51.js"></script>
+<!--    <script src="https://www.gstatic.com/firebasejs/ui/4.8.1/firebase-ui-auth.js"></script>-->
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/4.8.1/firebase-ui-auth.css" />
 
 </head>
 <body>
-<div class="wrapper">
+<div id="auth-container"></div>
+<div id="loader">Loading...</div>
+<div class="wrapper" style="display:none">
     <header class="header">
         <div class="current-channel-name">
             <i class="fa fa-hashtag"></i>

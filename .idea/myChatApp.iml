@@ -10,5 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="cd8ee9ed51" level="application" />
     <orderEntry type="library" name="cd8ee9ed51" level="application" />
+    <orderEntry type="library" name="firebase-ui-auth" level="application" />
   </component>
 </module>
