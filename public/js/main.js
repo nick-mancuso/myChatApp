@@ -28,14 +28,8 @@ const allChannelsRef = ref(db, allChannelsPrefix);
 let channelName = "general";
 let channelRef = ref(db, allChannelsPrefix + channelName);
 
-// let userName = "Donny";
-// let screenName = "Donny Kerabatsos";
+let user;
 
-let owner = {
-    "username": "Donny",
-    "ownerID": "asdf123",
-    "avatarSrc": "//gravatar.com/avatar/00034587632094500000000000000000?d=retro"
-};
 
 /** Initial setup */
 // add event listener for  channels list
@@ -66,10 +60,11 @@ function sendMessage() {
     let message = {
         "history" : { },
         "msg" : text,
-        "ownerID" : owner.ownerID,
+        "ownerID" : user.uid,
         "reactions" : "",
         "time" : time,
-        "userDisplay" : owner.username
+        "userDisplay" : user.displayName,
+        "userPhotoURL": user.photoURL
     };
     const newMessageRef = push(channelRef);
     set(newMessageRef, message);
@@ -94,10 +89,9 @@ function addMessage(data) {
     // below constant might need to just be data, not data.val()
     // console.log(data.val());
 
-    const { history, msg, ownerID, reactions, time, userDisplay } = data.val();
+    const { history, msg, ownerID, reactions, time, userDisplay, userPhotoURL } = data.val();
     messageList.insertAdjacentHTML('beforeend', createMessageHTML(
-        "//gravatar.com/avatar/00034587632094500000000000000000?d=retro",
-        msg, userDisplay, time
+        userPhotoURL, msg, userDisplay, time
     ));
     // scroll to bottom
     messageList.scrollTop = messageList.scrollHeight;
@@ -146,20 +140,20 @@ function createChannelHTML(channelName) {
     `;
 }
 
-function createOtherUserHTML(avatarSrc, name) {
+function createOtherUserHTML() {
     return `
         <div class="user-container">
             <i class="fa fa-circle text-success"></i>
-            Walter Sobchak
+            ${user.displayName}
         </div>
     `;
 }
 
-function createCurrentUserHTML(username) {
+function createCurrentUserHTML() {
     return `
         <div class="current-user-container">
-            <img class="user-img" src="//gravatar.com/avatar/56234674574535734573000000000001?d=retro" alt="">
-            ${username}
+            <img class="user-img" src="${user.photoURL}" alt="">
+            ${user.displayName}
         </div>
     `;
 }
@@ -174,17 +168,28 @@ document.getElementById("send-button")
 document.getElementById("loginWithGoogle")
     .addEventListener("click", e => {
     loginWithGoogle();
-})
+    })
 
-function loginWithEmailAndPassword() {
-    const {email} = this;
-    const {password} = this;
+document.getElementById("login-form")
+    .addEventListener("submit", e => {
+        e.preventDefault();
+        let input = $("#login-form").serializeArray();
+        loginWithEmailAndPassword(input[0].value, input[1].value);
+    })
+
+document.getElementById("register-form")
+    .addEventListener("submit", e => {
+        e.preventDefault();
+        let input = $("#register-form").serializeArray();
+        register(input[0].value, input[1].value, input[2].value, input[3].value);
+    })
+
+function loginWithEmailAndPassword(email, password) {
+
     fbauth.signInWithEmailAndPassword(authorize, email, password)
         .then(data => {
-            this.user = data.user;
-            console.log(this.user);
-            this.user = data.user;
-
+            user = data.user;
+            loadChatApp();
         })
         .catch(function (error) {
             console.log(error.code);
@@ -196,9 +201,8 @@ function loginWithGoogle() {
     let provider = new fbauth.GoogleAuthProvider();
     fbauth.signInWithPopup(authorize, provider)
         .then(data => {
-            console.log(data);
-            // this.user = data.user;
-            // TODO: save user info here
+            console.log(data.user);
+            user = data.user;
             loadChatApp();
         }).catch(error => {
         console.log(error.code);
@@ -206,27 +210,22 @@ function loginWithGoogle() {
     });
 }
 
-function register() {
-    const { register_email } = this;
-    const { register_password} = this;
-    const { retype_password } = this;
-    const { displayName } = this;
+function register(register_email, register_password, retype_password, displayName) {
 
     if (register_password === retype_password) {
         fbauth.createUserWithEmailAndPassword(
             authorize, register_email, register_password
         )
             .then(data => {
-                this.user = data.user;
-                console.log(this.user);
-                this.isAuthorized = true;
+                user = data.user;
+                loadChatApp();
             })
             .catch(error => {
                 console.log(error.code);
                 console.log(error.message);
             });
-        if (this.auth.currentUser !== null) {
-            fbauth.updateProfile(this.auth.currentUser, {
+        if (authorize.currentUser !== null) {
+            fbauth.updateProfile(authorize.currentUser, {
                 displayName: displayName,
                 photoURL: "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
             });
@@ -242,4 +241,7 @@ function register() {
 function loadChatApp() {
     $("#auth-container").addClass("d-none");
     $("#chat").removeClass("d-none");
+    $("#current-user-info").append(createCurrentUserHTML());
+    $("#users-list").append(createOtherUserHTML());
+
 }

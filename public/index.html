@@ -26,7 +26,7 @@
             <h2 class="title">Register</h2>
             <form id="register-form">
                 <div class="form-group">
-                    <label for="email">Email</label>
+                    <label for="register-username-text">Email</label>
                     <input
                             type="text"
                             class="form-control"
@@ -34,7 +34,7 @@
                             name="email"
                             placeholder="email"
                     />
-                    <label for="password">Password</label>
+                    <label for="register-password-text">Password</label>
                     <input
                             type="text"
                             class="form-control"
@@ -42,7 +42,7 @@
                             name="password"
                             placeholder="Password"
                     />
-                    <label for="retype-password">Re-type Password</label>
+                    <label for="retype-password-text">Re-type Password</label>
                     <input
                             type="text"
                             class="form-control"
@@ -50,7 +50,7 @@
                             name="password"
                             placeholder="Password"
                     />
-                    <label for="display-name">Display Name</label>
+                    <label for="register-displayName-text">Display Name</label>
                     <input
                             type="text"
                             class="form-control"
@@ -61,19 +61,19 @@
                 </div>
                 <button type="submit" class="mat-button">Submit</button>
             </form>
-            <h2 class="title">Sign In</h2>
+            <h2 class="title">Sign In With Email</h2>
             <form id="login-form">
                 <div class="form-group">
-                    <label for="email">Email</label>
-                    <label for="username-text"></label><input
+                    <label for="username-text">Email</label>
+                    <input
                             type="text"
                             class="form-control"
                             id="username-text"
                             name="email"
                             placeholder="email"
                     />
-                    <label for="password">Password</label>
-                    <label for="password-text"></label><input
+                    <label for="password-text">Password</label>
+                    <input
                             type="text"
                             class="form-control"
                             id="password-text"
@@ -84,7 +84,7 @@
                 <button type="submit" class="mat-button">Submit</button>
             </form>
             <button class="mat-button" id="loginWithGoogle" >
-                Log in With Google
+                Sign in With Google
             </button>
         </div>
     </div>
@@ -121,23 +121,14 @@
                 <div class="channel-list" id="channelList">
                     <div id="channels-header">TEXT CHANNELS</div>
                 </div>
-                <div class="current-user-info">
-                    <div class="current-user-container">
-                        <img class="user-img" src="//gravatar.com/avatar/56234674574535734573000000000001?d=retro" alt="">
-                        Walter Sobchak
-                    </div>
-                </div>
+                <div class="current-user-info" id="current-user-info"></div>
             </aside>
             <!-- End channel list-->
             <!-- Begin user list -->
             <aside class="sidebar-second">
-                <div class="users-list">
+                <div class="users-list" id="users-list">
                     <div id="online-users-header">
                         ONLINE
-                    </div>
-                    <div class="user-container">
-                        <i class="fa fa-circle text-success"></i>
-                        Walter Sobchak
                     </div>
                 </div>
             </aside>
