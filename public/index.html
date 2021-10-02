@@ -9,7 +9,9 @@
     <link rel="stylesheet" href="css/bootstrap-reboot.css">
     <link rel="stylesheet" href="css/bootstrap-utilities.css">
     <script src="js/bootstrap.bundle.js"></script>
-<!--    <script type="module" src="js/bootstrap.esm.js"></script>-->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!--    <script type="module" src="js/bootstrap.esm.js"></script>-->
     <script src="js/bootstrap.js"></script>
     <script type="module" src="js/main.js"></script>
     <script src="https://use.fontawesome.com/cd8ee9ed51.js"></script>
@@ -18,9 +20,76 @@
 
 </head>
 <body>
-<div id="auth-container"></div>
-<div id="loader">Loading...</div>
-<div class="wrapper" style="display:none">
+<div id="auth-container">
+    <div class="content" role="main">
+        <div class="login" id="login">
+            <h2 class="title">Register</h2>
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input
+                            type="text"
+                            class="form-control"
+                            id="register-username-text"
+                            name="email"
+                            placeholder="email"
+                    />
+                    <label for="password">Password</label>
+                    <input
+                            type="text"
+                            class="form-control"
+                            id="register-password-text"
+                            name="password"
+                            placeholder="Password"
+                    />
+                    <label for="retype-password">Re-type Password</label>
+                    <input
+                            type="text"
+                            class="form-control"
+                            id="retype-password-text"
+                            name="password"
+                            placeholder="Password"
+                    />
+                    <label for="display-name">Display Name</label>
+                    <input
+                            type="text"
+                            class="form-control"
+                            id="register-displayName-text"
+                            name="displayName"
+                            placeholder="displayName"
+                    />
+                </div>
+                <button type="submit" class="mat-button">Submit</button>
+            </form>
+            <h2 class="title">Sign In</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <label for="username-text"></label><input
+                            type="text"
+                            class="form-control"
+                            id="username-text"
+                            name="email"
+                            placeholder="email"
+                    />
+                    <label for="password">Password</label>
+                    <label for="password-text"></label><input
+                            type="text"
+                            class="form-control"
+                            id="password-text"
+                            name="password"
+                            placeholder="Password"
+                    />
+                </div>
+                <button type="submit" class="mat-button">Submit</button>
+            </form>
+            <button class="mat-button" id="loginWithGoogle" >
+                Log in With Google
+            </button>
+        </div>
+    </div>
+</div>
+<div id="chat" class="wrapper d-none">
     <header class="header">
         <div class="current-channel-name">
             <i class="fa fa-hashtag"></i>

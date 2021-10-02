@@ -3,7 +3,8 @@ import {
     remove, get, set, child, getDatabase,
     onChildAdded, push, ref, update
 } from 'https://www.gstatic.com/firebasejs/9.0.1/firebase-database.js';
-import * as fbauth from "https://www.gstatic.com/firebasejs/9.0.2/firebase-auth.js";
+// import version must be 9.0.1
+import * as fbauth from "https://www.gstatic.com/firebasejs/9.0.1/firebase-auth.js";
 /* Inspired by https://firebase.google.com/docs */
 
 const firebaseConfig = {
@@ -21,6 +22,8 @@ const app = initializeApp(firebaseConfig);
 const allChannelsPrefix = "channels/";
 
 const db = getDatabase();
+const authorize = fbauth.getAuth(app);
+console.log(authorize);
 const allChannelsRef = ref(db, allChannelsPrefix);
 let channelName = "general";
 let channelRef = ref(db, allChannelsPrefix + channelName);
@@ -162,9 +165,81 @@ function createCurrentUserHTML(username) {
 }
 
 // setup listeners
-document.getElementById("send-button").addEventListener("click", e => {
+document.getElementById("send-button")
+    .addEventListener("click", e => {
     sendMessage();
 })
 
-const authorize = fbauth.getAuth(app);
-console.log(authorize);
+
+document.getElementById("loginWithGoogle")
+    .addEventListener("click", e => {
+    loginWithGoogle();
+})
+
+function loginWithEmailAndPassword() {
+    const {email} = this;
+    const {password} = this;
+    fbauth.signInWithEmailAndPassword(authorize, email, password)
+        .then(data => {
+            this.user = data.user;
+            console.log(this.user);
+            this.user = data.user;
+
+        })
+        .catch(function (error) {
+            console.log(error.code);
+            console.log(error.message);
+        });
+}
+
+function loginWithGoogle() {
+    let provider = new fbauth.GoogleAuthProvider();
+    fbauth.signInWithPopup(authorize, provider)
+        .then(data => {
+            console.log(data);
+            // this.user = data.user;
+            // TODO: save user info here
+            loadChatApp();
+        }).catch(error => {
+        console.log(error.code);
+        console.log(error.message);
+    });
+}
+
+function register() {
+    const { register_email } = this;
+    const { register_password} = this;
+    const { retype_password } = this;
+    const { displayName } = this;
+
+    if (register_password === retype_password) {
+        fbauth.createUserWithEmailAndPassword(
+            authorize, register_email, register_password
+        )
+            .then(data => {
+                this.user = data.user;
+                console.log(this.user);
+                this.isAuthorized = true;
+            })
+            .catch(error => {
+                console.log(error.code);
+                console.log(error.message);
+            });
+        if (this.auth.currentUser !== null) {
+            fbauth.updateProfile(this.auth.currentUser, {
+                displayName: displayName,
+                photoURL: "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
+            });
+        }
+    }
+    else {
+        alert("Passwords do not match!");
+        // TODO: clear password inputs?
+    }
+
+}
+
+function loadChatApp() {
+    $("#auth-container").addClass("d-none");
+    $("#chat").removeClass("d-none");
+}
