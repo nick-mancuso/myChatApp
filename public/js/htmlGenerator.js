@@ -86,9 +86,14 @@ export function createMessageHTMLMyMessage(avatarSrc, text, name,
     `;
 }
 
-export function createEditBoxHTML(msgID) {
+export function createEditBoxHTML(msgID, existingText) {
+    console.log("existing text:");
+    console.log(existingText);
     return `
-    <input id="${msgID}_editBox" type="text" class="form-control" autocomplete="off">
+    <input id="${msgID}_editBox" type="text" 
+    class="form-control" autocomplete="off"
+    value="${existingText}"
+    >
     </div>
     
     

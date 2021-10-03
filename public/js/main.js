@@ -1,15 +1,18 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.0.1/firebase-app.js';
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/9.0.1/firebase-app.js';
 import {
-    remove, get, set, child, getDatabase,
-    onChildAdded, push, ref, update, onChildChanged
+    getDatabase,
+    onChildAdded,
+    onChildChanged,
+    push,
+    ref,
+    remove,
+    set
 } from 'https://www.gstatic.com/firebasejs/9.0.1/firebase-database.js';
 // import version must be 9.0.1
 import * as fbauth from "https://www.gstatic.com/firebasejs/9.0.1/firebase-auth.js";
 /* Inspired by https://firebase.google.com/docs */
-
 import * as htmlGenerator from "./htmlGenerator.js";
 import * as chat from "./chat.js";
-import {createMessageHTMLMyMessage} from "./htmlGenerator.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAdpaGbpdvZFS_J5BAPLVZxVW_vUlUVzbk",
@@ -35,7 +38,7 @@ let channelRef = ref(db, allChannelsPrefix + channelName);
 let user;
 
 /** Initial setup */
-// add event listener for  channels list
+// add event listener for channels list
 onChildAdded(allChannelsRef, channel => addChannel(channel));
 
 // add event listener for messages in current channel
@@ -45,7 +48,7 @@ onChildChanged(channelRef, data => {
     const { history, msg, ownerID, reactions,
         time, userDisplay, userPhotoURL, edited } = data.val();
 
-    $("#" + data.key + "_posttime").append(" edited");
+    $("#" + data.key + "_posttime").replaceWith(time);
     $("#" + data.key + "_message_text").replaceWith(msg);
 })
 
@@ -63,16 +66,20 @@ onChildChanged(channelRef, data => {
 //     }
 // };
 
-function sendMessage() {
-    const text = getInputText();
+function getTime() {
     const date = new Date();
-    const time = date.getTime();
-    const datetime = (date.getMonth() + 1) + "/"
+    return (date.getMonth() + 1) + "/"
         + date.getDate() + "/"
         + date.getFullYear() + " @ "
         + date.getHours() + ":"
         + date.getMinutes() + ":"
         + date.getSeconds();
+}
+
+
+function sendMessage() {
+    const text = getInputText();
+
     console.log("in sendmsg");
     console.log(user);
 
@@ -81,7 +88,7 @@ function sendMessage() {
         "msg" : text,
         "ownerID" : user.uid,
         "reactions" : "",
-        "time" : datetime,
+        "time" : getTime(),
         "userDisplay" : user.displayName,
         "userPhotoURL": user.photoURL,
         "edited": "no"
@@ -104,14 +111,10 @@ function clearInputBox() {
 
 function addMessage(data) {
     const messageList = document.getElementById("messageList");
-
-    // TODO: implement other elements
-
     const { history, msg, ownerID, reactions, time, userDisplay, userPhotoURL, edited } = data.val();
     const msgID = data.key;
     console.log(data.key);
 
-    // scroll to bottom
     if (ownerID === user.uid) {
         // add pencil and x
         console.log("here");
@@ -119,38 +122,30 @@ function addMessage(data) {
             htmlGenerator.createMessageHTMLMyMessage(
                 userPhotoURL, msg, userDisplay, time, msgID
             ));
-        $("#" + msgID + "_edit").on("click", e => {
-            alert("Are you sure you want to edit this message?");
 
-            $("#"+ msgID + "_messages").append(htmlGenerator.createEditBoxHTML(msgID));
-            $("#"+ msgID + "_message_text").hide();
-            const currentChannelAndMessagePath = allChannelsPrefix + channelName + "/" + msgID;
-            const editBoxRef = $("#" + msgID + "_editBox");
-            $(document).on('keyup', function(e) {
-                e.preventDefault();
-                if (e.key === "Enter") {
-                    set(ref(db, currentChannelAndMessagePath + "/msg"),
-                        editBoxRef.val());
-                    set(ref(db, currentChannelAndMessagePath + "/edited"), "true");
-                    editBoxRef.remove();
-                }
-                if (e.key === "Escape") {
-                    $("#" + msgID + "_editBox").remove();
-                    $("#"+ msgID + "_message_text").show();
-                }
-            });
-            // let currentMsgContents = obj.message;
-            // let msgLoc = rtdb.ref(db, `/chats/${msgID}/message`);
-
-        })
-        $("#" + msgID + "_delete").on("click", e => {
-            alert("Are you sure you want to delete this message?");
+        const messageEditButtonRef = $("#" + msgID + "_edit");
+        messageEditButtonRef.on("click", e => {
             e.preventDefault();
+            alert("Are you sure you want to edit this message?");
+            const existingMessageText =  $("#" + msgID + "_message_text");
+            $("#" + msgID + "_messages")
+                .append(htmlGenerator.createEditBoxHTML(msgID, existingMessageText[0].innerText));
+            existingMessageText.hide();
+            $(document).on('keyup', function (e) {
+                e.preventDefault();
+                editMessage(e, msgID);
+            });
+        });
+
+        const deleteButtonRef = $("#" + msgID + "_delete");
+        deleteButtonRef.on("click", e => {
+            e.preventDefault();
+            alert("Are you sure you want to delete this message?");
             console.log(msgID);
             console.log(allChannelsPrefix + channelName + "/" + msgID);
             remove(ref(db, allChannelsPrefix + channelName + "/" + msgID));
             $("#" + msgID + "_message").remove();
-        })
+        });
     }
     // else if () {
     //     // is admin, add x
@@ -160,12 +155,30 @@ function addMessage(data) {
         messageList.insertAdjacentHTML('beforeend',
             htmlGenerator.createMessageHTML(userPhotoURL, msg, userDisplay, time));
     }
+
     messageList.scrollTop = messageList.scrollHeight;
+}
+
+function editMessage(e, msgID) {
+    const currentChannelAndMessagePath = allChannelsPrefix + channelName + "/" + msgID;
+    const editBoxRef = $("#" + msgID + "_editBox");
+    if (e.key === "Enter") {
+        set(ref(db, currentChannelAndMessagePath + "/msg"), editBoxRef.val());
+        set(ref(db, currentChannelAndMessagePath + "/edited"), "true");
+        set(ref(db, currentChannelAndMessagePath + "/time"), getTime() + " edited");
+        editBoxRef.hide();
+    }
+    if (e.key === "Escape") {
+        editBoxRef.remove();
+        $("#"+ msgID + "_message_text").show();
+    }
 }
 
 
 function addChannel(channel) {
     const channelList = document.getElementById("channelList");
+    console.log("channel");
+    console.log(channel);
     channelList.insertAdjacentHTML('beforeend',
         htmlGenerator.createChannelHTML(channel.key))
 }
