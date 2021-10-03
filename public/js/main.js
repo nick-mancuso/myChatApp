@@ -7,6 +7,9 @@ import {
 import * as fbauth from "https://www.gstatic.com/firebasejs/9.0.1/firebase-auth.js";
 /* Inspired by https://firebase.google.com/docs */
 
+import * as htmlGenerator from "./htmlGenerator.js";
+import * as chat from "./chat.js";
+
 const firebaseConfig = {
     apiKey: "AIzaSyAdpaGbpdvZFS_J5BAPLVZxVW_vUlUVzbk",
     authDomain: "chat-app-233ed.firebaseapp.com",
@@ -29,7 +32,6 @@ let channelName = "general";
 let channelRef = ref(db, allChannelsPrefix + channelName);
 
 let user;
-
 
 /** Initial setup */
 // add event listener for  channels list
@@ -56,13 +58,19 @@ function sendMessage() {
     const text = getInputText();
     const date = new Date();
     const time = date.getTime();
+    const datetime = (date.getMonth() + 1) + "/"
+        + date.getDate() + "/"
+        + date.getFullYear() + " @ "
+        + date.getHours() + ":"
+        + date.getMinutes() + ":"
+        + date.getSeconds();
 
     let message = {
         "history" : { },
         "msg" : text,
         "ownerID" : user.uid,
         "reactions" : "",
-        "time" : time,
+        "time" : datetime,
         "userDisplay" : user.displayName,
         "userPhotoURL": user.photoURL
     };
@@ -86,76 +94,19 @@ function addMessage(data) {
     const messageList = document.getElementById("messageList");
 
     // TODO: implement other elements
-    // below constant might need to just be data, not data.val()
-    // console.log(data.val());
 
     const { history, msg, ownerID, reactions, time, userDisplay, userPhotoURL } = data.val();
-    messageList.insertAdjacentHTML('beforeend', createMessageHTML(
-        userPhotoURL, msg, userDisplay, time
-    ));
+    messageList.insertAdjacentHTML('beforeend',
+        htmlGenerator.createMessageHTML(userPhotoURL, msg, userDisplay, time));
     // scroll to bottom
     messageList.scrollTop = messageList.scrollHeight;
 }
 
-function createMessageHTML(avatarSrc, text, name, timestamp) {
-    return `
-        <article class="msg-container msg-remote" >
-            <div class="msg-box">
-                <img class="user-img"
-                     src="${avatarSrc}" alt=""/>
-                <div class="flr">
-                    <div class="messages">
-                        <p class="msg" >
-                            ${text}
-                        </p>
-                    </div>
-                    <span class="timestamp">
-                        <span class="username">
-                            ${name}
-                        </span>
-                        &bull;
-                        <span class="posttime">
-                            ${timestamp}
-                        </span>
-                    </span>
-                </div>
-            </div>
-        </article>    
-    `;
-}
 
 function addChannel(channel) {
     const channelList = document.getElementById("channelList");
-    channelList.insertAdjacentHTML('beforeend', createChannelHTML(channel.key))
-}
-
-function createChannelHTML(channelName) {
-    return `
-        <div class="channel-container">
-            <i class="fa fa-hashtag" id="channel-hashtag"></i>
-            <p class="channel-name">
-               ${channelName}
-            </p>
-        </div>
-    `;
-}
-
-function createOtherUserHTML() {
-    return `
-        <div class="user-container">
-            <i class="fa fa-circle text-success"></i>
-            ${user.displayName}
-        </div>
-    `;
-}
-
-function createCurrentUserHTML() {
-    return `
-        <div class="current-user-container">
-            <img class="user-img" src="${user.photoURL}" alt="">
-            ${user.displayName}
-        </div>
-    `;
+    channelList.insertAdjacentHTML('beforeend',
+        htmlGenerator.createChannelHTML(channel.key))
 }
 
 // setup listeners
@@ -189,7 +140,7 @@ function loginWithEmailAndPassword(email, password) {
     fbauth.signInWithEmailAndPassword(authorize, email, password)
         .then(data => {
             user = data.user;
-            loadChatApp();
+            chat.init(user, channelName);
         })
         .catch(function (error) {
             console.log(error.code);
@@ -203,7 +154,7 @@ function loginWithGoogle() {
         .then(data => {
             console.log(data.user);
             user = data.user;
-            loadChatApp();
+            chat.init(data.user, channelName);
         }).catch(error => {
         console.log(error.code);
         console.log(error.message);
@@ -218,7 +169,7 @@ function register(register_email, register_password, retype_password, displayNam
         )
             .then(data => {
                 user = data.user;
-                loadChatApp();
+                chat.init(user, channelName);
             })
             .catch(error => {
                 console.log(error.code);
@@ -239,9 +190,9 @@ function register(register_email, register_password, retype_password, displayNam
 }
 
 function loadChatApp() {
-    $("#auth-container").addClass("d-none");
-    $("#chat").removeClass("d-none");
-    $("#current-user-info").append(createCurrentUserHTML());
-    $("#users-list").append(createOtherUserHTML());
-
+    // $("#auth-container").addClass("d-none");
+    // $("#chat").removeClass("d-none");
+    // $("#current-user-info").append(htmlGenerator.createCurrentUserHTML(user));
+    // $("#users-list").append(htmlGenerator.createOtherUserHTML(user));
+    // $("#channelName").text("# " + channelName);
 }
