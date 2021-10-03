@@ -64,6 +64,8 @@ function sendMessage() {
         + date.getHours() + ":"
         + date.getMinutes() + ":"
         + date.getSeconds();
+    console.log("in sendmsg");
+    console.log(user);
 
     let message = {
         "history" : { },
@@ -140,7 +142,6 @@ function loginWithEmailAndPassword(email, password) {
     fbauth.signInWithEmailAndPassword(authorize, email, password)
         .then(data => {
             user = data.user;
-            chat.init(user, channelName);
         })
         .catch(function (error) {
             console.log(error.code);
@@ -154,7 +155,6 @@ function loginWithGoogle() {
         .then(data => {
             console.log(data.user);
             user = data.user;
-            chat.init(data.user, channelName);
         }).catch(error => {
         console.log(error.code);
         console.log(error.message);
@@ -162,14 +162,12 @@ function loginWithGoogle() {
 }
 
 function register(register_email, register_password, retype_password, displayName) {
-
     if (register_password === retype_password) {
         fbauth.createUserWithEmailAndPassword(
             authorize, register_email, register_password
         )
             .then(data => {
                 user = data.user;
-                chat.init(user, channelName);
             })
             .catch(error => {
                 console.log(error.code);
@@ -189,10 +187,12 @@ function register(register_email, register_password, retype_password, displayNam
 
 }
 
-function loadChatApp() {
-    // $("#auth-container").addClass("d-none");
-    // $("#chat").removeClass("d-none");
-    // $("#current-user-info").append(htmlGenerator.createCurrentUserHTML(user));
-    // $("#users-list").append(htmlGenerator.createOtherUserHTML(user));
-    // $("#channelName").text("# " + channelName);
-}
+fbauth.onAuthStateChanged(authorize, user => {
+    if (!!user) {
+        chat.init(user, channelName);
+    } else {
+        $("#auth-container").addClass("d-none");
+        $("#chat").removeClass("d-none");
+        $("#chat").empty();
+    }
+});

@@ -1,0 +1,3 @@
+ - need to handle staying in chat app when refreshing
+ - editing
+ - 
