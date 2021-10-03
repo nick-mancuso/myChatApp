@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.0.1/firebase-app.js';
 import {
     remove, get, set, child, getDatabase,
-    onChildAdded, push, ref, update
+    onChildAdded, push, ref, update, onChildChanged
 } from 'https://www.gstatic.com/firebasejs/9.0.1/firebase-database.js';
 // import version must be 9.0.1
 import * as fbauth from "https://www.gstatic.com/firebasejs/9.0.1/firebase-auth.js";
@@ -9,6 +9,7 @@ import * as fbauth from "https://www.gstatic.com/firebasejs/9.0.1/firebase-auth.
 
 import * as htmlGenerator from "./htmlGenerator.js";
 import * as chat from "./chat.js";
+import {createMessageHTMLMyMessage} from "./htmlGenerator.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAdpaGbpdvZFS_J5BAPLVZxVW_vUlUVzbk",
@@ -39,6 +40,14 @@ onChildAdded(allChannelsRef, channel => addChannel(channel));
 
 // add event listener for messages in current channel
 onChildAdded(channelRef, data => addMessage(data));
+
+onChildChanged(channelRef, data => {
+    const { history, msg, ownerID, reactions,
+        time, userDisplay, userPhotoURL, edited } = data.val();
+
+    $("#" + data.key + "_posttime").append(" edited");
+    $("#" + data.key + "_message_text").replaceWith(msg);
+})
 
 
 // let message = {
@@ -74,7 +83,8 @@ function sendMessage() {
         "reactions" : "",
         "time" : datetime,
         "userDisplay" : user.displayName,
-        "userPhotoURL": user.photoURL
+        "userPhotoURL": user.photoURL,
+        "edited": "no"
     };
     const newMessageRef = push(channelRef);
     set(newMessageRef, message);
@@ -97,10 +107,59 @@ function addMessage(data) {
 
     // TODO: implement other elements
 
-    const { history, msg, ownerID, reactions, time, userDisplay, userPhotoURL } = data.val();
-    messageList.insertAdjacentHTML('beforeend',
-        htmlGenerator.createMessageHTML(userPhotoURL, msg, userDisplay, time));
+    const { history, msg, ownerID, reactions, time, userDisplay, userPhotoURL, edited } = data.val();
+    const msgID = data.key;
+    console.log(data.key);
+
     // scroll to bottom
+    if (ownerID === user.uid) {
+        // add pencil and x
+        console.log("here");
+        messageList.insertAdjacentHTML('beforeend',
+            htmlGenerator.createMessageHTMLMyMessage(
+                userPhotoURL, msg, userDisplay, time, msgID
+            ));
+        $("#" + msgID + "_edit").on("click", e => {
+            alert("Are you sure you want to edit this message?");
+
+            $("#"+ msgID + "_messages").append(htmlGenerator.createEditBoxHTML(msgID));
+            $("#"+ msgID + "_message_text").hide();
+            const currentChannelAndMessagePath = allChannelsPrefix + channelName + "/" + msgID;
+            const editBoxRef = $("#" + msgID + "_editBox");
+            $(document).on('keyup', function(e) {
+                e.preventDefault();
+                if (e.key === "Enter") {
+                    set(ref(db, currentChannelAndMessagePath + "/msg"),
+                        editBoxRef.val());
+                    set(ref(db, currentChannelAndMessagePath + "/edited"), "true");
+                    editBoxRef.remove();
+                }
+                if (e.key === "Escape") {
+                    $("#" + msgID + "_editBox").remove();
+                    $("#"+ msgID + "_message_text").show();
+                }
+            });
+            // let currentMsgContents = obj.message;
+            // let msgLoc = rtdb.ref(db, `/chats/${msgID}/message`);
+
+        })
+        $("#" + msgID + "_delete").on("click", e => {
+            alert("Are you sure you want to delete this message?");
+            e.preventDefault();
+            console.log(msgID);
+            console.log(allChannelsPrefix + channelName + "/" + msgID);
+            remove(ref(db, allChannelsPrefix + channelName + "/" + msgID));
+            $("#" + msgID + "_message").remove();
+        })
+    }
+    // else if () {
+    //     // is admin, add x
+    // }
+    else {
+        // normal user and not my message
+        messageList.insertAdjacentHTML('beforeend',
+            htmlGenerator.createMessageHTML(userPhotoURL, msg, userDisplay, time));
+    }
     messageList.scrollTop = messageList.scrollHeight;
 }
 
