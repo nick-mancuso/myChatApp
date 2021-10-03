@@ -187,9 +187,10 @@ function register(register_email, register_password, retype_password, displayNam
 
 }
 
-fbauth.onAuthStateChanged(authorize, user => {
-    if (!!user) {
-        chat.init(user, channelName);
+fbauth.onAuthStateChanged(authorize, userInfo => {
+    if (!!userInfo) {
+        chat.init(userInfo, channelName);
+        user = userInfo;
     } else {
         $("#auth-container").addClass("d-none");
         $("#chat").removeClass("d-none");
