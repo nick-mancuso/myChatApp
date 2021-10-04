@@ -264,8 +264,8 @@ fbauth.onAuthStateChanged(authorize, userInfo => {
         chat.init(userInfo, channelName);
         user = userInfo;
     } else {
-        $("#auth-container").addClass("d-none");
-        $("#chat").removeClass("d-none");
+        $("#auth-container").removeClass("d-none");
+        $("#chat").addClass("d-none");
         $("#chat").empty();
     }
 });
