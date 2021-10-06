@@ -22,6 +22,14 @@ export function createCurrentUserHTML(user) {
         <div class="current-user-container">
             <img class="user-img" src="${user.photoURL}" alt="">
             ${user.displayName}
+            <div class="dropup">
+                    <i class="fa fa-cog dropbtn" id="currentUserActions"></i>
+                <div class="dropup-content d-none" id="dropUpContent">
+                    <a href="#" id="logout">Log out</a>
+                    <a href="#" id="changePassword">Change password</a>
+                    <a href="#" id="changeDisplayName">Change display name</a>
+                </div>
+            </div>
         </div>
     `;
 }
