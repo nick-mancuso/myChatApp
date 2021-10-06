@@ -1,3 +1,2 @@
- - do not allow blank messages
  - 
  - 

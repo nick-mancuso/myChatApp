@@ -60,11 +60,7 @@ function getTime() {
 }
 
 
-function sendMessage() {
-    const text = getInputText();
-
-    console.log("in sendmsg");
-    console.log(user);
+function sendMessage(text) {
 
     let message = {
         "history" : { },
@@ -170,7 +166,10 @@ function addChannel(channel) {
 // setup listeners
 document.getElementById("send-button")
     .addEventListener("click", e => {
-    sendMessage();
+        const text = getInputText();
+        if (text !== "") {
+            sendMessage(text);
+        }
 })
 
 
