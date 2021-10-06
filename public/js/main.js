@@ -12,7 +12,6 @@ import {
 import * as fbauth from "https://www.gstatic.com/firebasejs/9.0.1/firebase-auth.js";
 /* Inspired by https://firebase.google.com/docs */
 import * as htmlGenerator from "./htmlGenerator.js";
-import * as chat from "./chat.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAdpaGbpdvZFS_J5BAPLVZxVW_vUlUVzbk",
@@ -36,22 +35,6 @@ let channelName = "general";
 let channelRef = ref(db, allChannelsPrefix + channelName);
 
 let user;
-
-/** Initial setup */
-// add event listener for channels list
-onChildAdded(allChannelsRef, channel => addChannel(channel));
-
-// add event listener for messages in current channel
-onChildAdded(channelRef, data => addMessage(data));
-
-onChildChanged(channelRef, data => {
-    const { history, msg, ownerID, reactions,
-        time, userDisplay, userPhotoURL, edited } = data.val();
-
-    $("#" + data.key + "_posttime").replaceWith(time);
-    $("#" + data.key + "_message_text").replaceWith(msg);
-})
-
 
 // let message = {
 //     "msgIDHERE" : {
@@ -167,6 +150,7 @@ function editMessage(e, msgID) {
         set(ref(db, currentChannelAndMessagePath + "/edited"), "true");
         set(ref(db, currentChannelAndMessagePath + "/time"), getTime() + " edited");
         editBoxRef.hide();
+        $("#"+ msgID + "_message_text").show();
     }
     if (e.key === "Escape") {
         editBoxRef.remove();
@@ -261,11 +245,72 @@ function register(register_email, register_password, retype_password, displayNam
 
 fbauth.onAuthStateChanged(authorize, userInfo => {
     if (!!userInfo) {
-        chat.init(userInfo, channelName, authorize);
+        init(userInfo, channelName, authorize);
         user = userInfo;
     } else {
-        $("#auth-container").removeClass("d-none");
-        $("#chat").addClass("d-none");
-        $("#chat").empty();
+        tearDown();
     }
 });
+
+function tearDown() {
+    console.log("in teardown!");
+    $("#auth-container").removeClass("d-none");
+    $("#chat").addClass("d-none");
+    $("#current-user-info").empty();
+    $("#users-list").empty();
+    $("#channelName").text("");
+}
+
+function init(user, channelName, authorize) {
+    console.log("in init!");
+    $("#chat").removeClass("d-none");
+    $("#auth-container").addClass("d-none");
+    $("#current-user-info").append(htmlGenerator.createCurrentUserHTML(user));
+    $("#currentUserActions").on("click", e => {
+        const dropUpContent = $("#dropUpContent");
+
+        if (dropUpContent.hasClass("d-none")) {
+            dropUpContent.removeClass("d-none");
+        }
+        else {
+            dropUpContent.addClass("d-none");
+        }
+
+    })
+
+    // Need to really do all users here
+    $("#users-list").append(htmlGenerator.createOtherUserHTML(user));
+
+    $("#channelName").text("# " + channelName)
+
+    // add event listener for channels list
+    onChildAdded(allChannelsRef, channel => addChannel(channel));
+
+    // add event listener for messages in current channel
+    onChildAdded(channelRef, data => addMessage(data));
+
+    onChildChanged(channelRef, data => {
+        const { history, msg, ownerID, reactions,
+            time, userDisplay, userPhotoURL, edited } = data.val();
+
+        $("#" + data.key + "_posttime").html(time);
+        $("#" + data.key + "_message_text").html(msg);
+    })
+
+
+    // Set up drop up user menu
+    $("#logout").on("click", e => {
+        fbauth.signOut(authorize)
+            .then(function() {
+                console.log("log out successful");
+            }, function(error) {
+                console.log(error);
+            });
+    })
+    $("#changePassword").on("click", e => {
+        alert("doesn't work yet!");
+    })
+    $("#changeDisplayName").on("click", e => {
+        alert("doesn't work yet!");
+    })
+}

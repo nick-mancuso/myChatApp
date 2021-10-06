@@ -85,9 +85,9 @@ export function createMessageHTMLMyMessage(avatarSrc, text, name,
                         </span>
                     </span>
                 </div>
-            <div style="font-size: 0.5rem;">
+            <div style="font-size: 0.60rem;">
             <i id="${msgID}_edit" class="fa fa-pencil" aria-hidden="true"></i>
-            <i id="${msgID}_delete" class="fa fa-times-circle" aria-hidden="true"></i>
+            <i id="${msgID}_delete" class="fa fa-times" aria-hidden="true"></i>
             </div>
             </div>
         </article>    
@@ -95,8 +95,6 @@ export function createMessageHTMLMyMessage(avatarSrc, text, name,
 }
 
 export function createEditBoxHTML(msgID, existingText) {
-    console.log("existing text:");
-    console.log(existingText);
     return `
     <input id="${msgID}_editBox" type="text" 
     class="form-control" autocomplete="off"
