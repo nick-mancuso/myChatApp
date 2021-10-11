@@ -20,7 +20,7 @@ export function createOtherUserHTML(user) {
 export function createCurrentUserHTML(user) {
     return `
         <div class="current-user-container">
-            <img class="user-img" src="${user.photoURL}" alt="">
+            <img class="user-img" src="${user.photoURL}" onerror="this.src='https://www.gravatar.com/avatar/?d=retro'" alt="not found">
             ${user.displayName}
             <div class="dropup">
                     <i class="fa fa-cog dropbtn" id="currentUserActions"></i>
@@ -40,7 +40,7 @@ export function createMessageHTML(avatarSrc, text, name, timestamp) {
         <article class="msg-container msg-remote">
             <div class="msg-box">
                 <img class="user-img"
-                     src="${avatarSrc}" alt=""/>
+                     src="${avatarSrc}" onerror="this.src='https://www.gravatar.com/avatar/?d=retro'" alt="not found"/>
                 <div class="flr">
                     <div class="messages">
                         <p class="msg" >
@@ -68,7 +68,7 @@ export function createMessageHTMLMyMessage(avatarSrc, text, name,
         <article id="${msgID}_message" class="msg-container msg-remote">
             <div class="msg-box">
                 <img class="user-img"
-                     src="${avatarSrc}" alt=""/>
+                     src="${avatarSrc}" onerror="this.src='https://www.gravatar.com/avatar/?d=retro'" alt="not found"/>
                 <div class="flr">
                     <div class="messages" id="${msgID}_messages">
                         <p class="msg" id="${msgID}_message_text">
