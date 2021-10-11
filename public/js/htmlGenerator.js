@@ -94,6 +94,37 @@ export function createMessageHTMLMyMessage(avatarSrc, text, name,
     `;
 }
 
+export function createMessageHTMLAdminMessage(avatarSrc, text, name,
+                                           timestamp, msgID) {
+    return `
+        <article id="${msgID}_message" class="msg-container msg-remote">
+            <div class="msg-box">
+                <img class="user-img"
+                     src="${avatarSrc}" onerror="this.src='https://www.gravatar.com/avatar/?d=retro'" alt="not found"/>
+                <div class="flr">
+                    <div class="messages" id="${msgID}_messages">
+                        <p class="msg" id="${msgID}_message_text">
+                            ${text}
+                        </p>
+                    </div>
+                    <span class="timestamp">
+                        <span class="username">
+                            ${name}
+                        </span>
+                        &bull;
+                        <span id="${msgID}_posttime" class="posttime">
+                            ${timestamp}
+                        </span>
+                    </span>
+                </div>
+            <div style="font-size: 0.60rem;">
+            <i id="${msgID}_delete" class="fa fa-times" aria-hidden="true"></i>
+            </div>
+            </div>
+        </article>    
+    `;
+}
+
 export function createEditBoxHTML(msgID, existingText) {
     return `
     <input id="${msgID}_editBox" type="text" 

@@ -6,7 +6,8 @@ import {
     push,
     ref,
     remove,
-    set
+    set,
+    onValue
 } from 'https://www.gstatic.com/firebasejs/9.0.1/firebase-database.js';
 // import version must be 9.0.1
 import * as fbauth from "https://www.gstatic.com/firebasejs/9.0.1/firebase-auth.js";
@@ -33,6 +34,8 @@ console.log(authorize);
 const allChannelsRef = ref(db, allChannelsPrefix);
 let channelName = "general";
 let channelRef = ref(db, allChannelsPrefix + channelName);
+let isAdmin = false;
+
 
 let user;
 
@@ -126,9 +129,28 @@ function addMessage(data) {
             $("#" + msgID + "_message").remove();
         });
     }
-    // else if () {
-    //     // is admin, add x
-    // }
+    else if (isAdmin) {
+        // is admin, add x
+        console.log("adding admin HTML!!!");
+        messageList.insertAdjacentHTML('beforeend',
+            htmlGenerator.createMessageHTMLAdminMessage(
+                userPhotoURL, msg, userDisplay, time, msgID
+            ));
+
+        const adminDeleteButtonRef = $("#" + msgID + "_delete");
+        adminDeleteButtonRef.on("click", e => {
+            if (isAdmin) {
+                e.preventDefault();
+                alert("Are you sure you want to delete this message?");
+                remove(ref(db, allChannelsPrefix + channelName + "/" + msgID))
+                    .then($("#" + msgID + "_message").remove())
+                    .catch(e => {
+                        console.log(e);
+                    });
+            }
+        });
+
+    }
     else {
         // normal user and not my message
         messageList.insertAdjacentHTML('beforeend',
@@ -262,6 +284,19 @@ function tearDown() {
 
 function init(user, channelName, authorize) {
     console.log("in init!");
+
+    //check user role
+    onValue(ref(db, `/users/${authorize.currentUser.uid}/roles/admin`),
+        ss => {
+            console.log("checking for admin status!");
+            console.log(authorize.currentUser.uid);
+            console.log(JSON.stringify(ss));
+            console.log(ss.val());
+            isAdmin = !!ss.val();
+            console.log("isAdmin:");
+            console.log(isAdmin);
+    });
+
     $("#chat").removeClass("d-none");
     $("#auth-container").addClass("d-none");
     $("#current-user-info").append(htmlGenerator.createCurrentUserHTML(user));
