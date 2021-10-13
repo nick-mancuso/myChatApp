@@ -7,7 +7,7 @@ import {
     ref,
     remove,
     set,
-    onValue
+    onValue, child, get
 } from 'https://www.gstatic.com/firebasejs/9.0.1/firebase-database.js';
 // import version must be 9.0.1
 import * as fbauth from "https://www.gstatic.com/firebasejs/9.0.1/firebase-auth.js";
@@ -35,6 +35,7 @@ const allChannelsRef = ref(db, allChannelsPrefix);
 let channelName = "general";
 let channelRef = ref(db, allChannelsPrefix + channelName);
 let isAdmin = false;
+let usersRef = ref(db, `/users`);
 
 
 let user;
@@ -95,11 +96,9 @@ function addMessage(data) {
     const messageList = document.getElementById("messageList");
     const { history, msg, ownerID, reactions, time, userDisplay, userPhotoURL, edited } = data.val();
     const msgID = data.key;
-    console.log(data.key);
 
     if (ownerID === user.uid) {
         // add pencil and x
-        console.log("here");
         messageList.insertAdjacentHTML('beforeend',
             htmlGenerator.createMessageHTMLMyMessage(
                 userPhotoURL, msg, userDisplay, time, msgID
@@ -123,15 +122,12 @@ function addMessage(data) {
         deleteButtonRef.on("click", e => {
             e.preventDefault();
             alert("Are you sure you want to delete this message?");
-            console.log(msgID);
-            console.log(allChannelsPrefix + channelName + "/" + msgID);
             remove(ref(db, allChannelsPrefix + channelName + "/" + msgID));
             $("#" + msgID + "_message").remove();
         });
     }
     else if (isAdmin) {
         // is admin, add x
-        console.log("adding admin HTML!!!");
         messageList.insertAdjacentHTML('beforeend',
             htmlGenerator.createMessageHTMLAdminMessage(
                 userPhotoURL, msg, userDisplay, time, msgID
@@ -179,8 +175,6 @@ function editMessage(e, msgID) {
 
 function addChannel(channel) {
     const channelList = document.getElementById("channelList");
-    console.log("channel");
-    console.log(channel);
     channelList.insertAdjacentHTML('beforeend',
         htmlGenerator.createChannelHTML(channel.key))
 }
@@ -219,6 +213,14 @@ function loginWithEmailAndPassword(email, password) {
     fbauth.signInWithEmailAndPassword(authorize, email, password)
         .then(data => {
             user = data.user;
+            let JSONString = JSON.stringify({
+                "displayName" : "",
+                "role" : "",
+                "admin" : "false"
+            });
+            let newUserJSON = JSON.parse(JSONString);
+            newUserJSON.displayName = user.displayName;
+            set(ref(db, "/users/" + user.auth.lastNotifiedUid), newUserJSON);
         })
         .catch(function (error) {
             console.log(error.code);
@@ -226,12 +228,20 @@ function loginWithEmailAndPassword(email, password) {
         });
 }
 
+
 function loginWithGoogle() {
     let provider = new fbauth.GoogleAuthProvider();
     fbauth.signInWithPopup(authorize, provider)
         .then(data => {
-            console.log(data.user);
             user = data.user;
+            let JSONString = JSON.stringify({
+                    "displayName" : "",
+                    "role" : "",
+                    "admin" : "false"
+            });
+            let newUserJSON = JSON.parse(JSONString);
+            newUserJSON.displayName = user.displayName;
+            set(ref(db, "/users/" + user.auth.lastNotifiedUid), newUserJSON);
         }).catch(error => {
         console.log(error.code);
         console.log(error.message);
@@ -244,18 +254,34 @@ function register(register_email, register_password, retype_password, displayNam
             authorize, register_email, register_password
         )
             .then(data => {
+                console.log("here in register");
                 user = data.user;
+                console.log(user);
+                if (authorize.currentUser !== null) {
+                    fbauth.updateProfile(authorize.currentUser, {
+                        displayName: displayName,
+                        photoURL: "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
+                    });
+                    console.log(user.auth.lastNotifiedUid);
+
+                    let JSONString = JSON.stringify({
+                        "displayName" : "",
+                        "role" : "",
+                        "admin" : "false"
+                    });
+                    let newUserJSON = JSON.parse(JSONString);
+                    newUserJSON.displayName = displayName;
+                    console.log("displayName");
+                    console.log(displayName);
+                    set(ref(db, "/users/" + user.auth.lastNotifiedUid), newUserJSON);
+
+                }
             })
             .catch(error => {
                 console.log(error.code);
                 console.log(error.message);
             });
-        if (authorize.currentUser !== null) {
-            fbauth.updateProfile(authorize.currentUser, {
-                displayName: displayName,
-                photoURL: "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
-            });
-        }
+
     }
     else {
         alert("Passwords do not match!");
@@ -274,7 +300,6 @@ fbauth.onAuthStateChanged(authorize, userInfo => {
 });
 
 function tearDown() {
-    console.log("in teardown!");
     $("#auth-container").removeClass("d-none");
     $("#chat").addClass("d-none");
     $("#current-user-info").empty();
@@ -283,18 +308,11 @@ function tearDown() {
 }
 
 function init(user, channelName, authorize) {
-    console.log("in init!");
 
     //check user role
-    onValue(ref(db, `/users/${authorize.currentUser.uid}/roles/admin`),
+    onValue(ref(db, `/users/${authorize.currentUser.uid}/admin`),
         ss => {
-            console.log("checking for admin status!");
-            console.log(authorize.currentUser.uid);
-            console.log(JSON.stringify(ss));
-            console.log(ss.val());
             isAdmin = !!ss.val();
-            console.log("isAdmin:");
-            console.log(isAdmin);
     });
 
     $("#chat").removeClass("d-none");
@@ -312,8 +330,11 @@ function init(user, channelName, authorize) {
 
     })
 
-    // Need to really do all users here
-    $("#users-list").append(htmlGenerator.createOtherUserHTML(user));
+    // onChildAdded(usersRef, uid => {
+    //
+    //     $("#users-list").append(htmlGenerator.createOtherUserHTML(user));
+    //
+    // });
 
     $("#channelName").text("# " + channelName)
 
