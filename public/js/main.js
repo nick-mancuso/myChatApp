@@ -3,11 +3,11 @@ import {
     getDatabase,
     onChildAdded,
     onChildChanged,
+    onValue,
     push,
     ref,
     remove,
-    set,
-    onValue, child, get
+    set
 } from 'https://www.gstatic.com/firebasejs/9.0.1/firebase-database.js';
 // import version must be 9.0.1
 import * as fbauth from "https://www.gstatic.com/firebasejs/9.0.1/firebase-auth.js";
@@ -71,10 +71,10 @@ function sendMessage(text) {
         "msg" : text,
         "ownerID" : user.uid,
         "reactions" : "",
-        "time" : getTime(),
+        "time" : Date.now(),
         "userDisplay" : user.displayName,
         "userPhotoURL": user.photoURL,
-        "edited": "no"
+        "edited": "false"
     };
     const newMessageRef = push(channelRef);
     set(newMessageRef, message);
@@ -99,15 +99,20 @@ function addMessage(data) {
 
     if (ownerID === user.uid) {
         // add pencil and x
+
+        let timeWithPossibleEdited = timeConverter(time);
+        if (edited === 'true') {
+            timeWithPossibleEdited  += " * edited";
+        }
+
         messageList.insertAdjacentHTML('beforeend',
             htmlGenerator.createMessageHTMLMyMessage(
-                userPhotoURL, msg, userDisplay, time, msgID
+                userPhotoURL, msg, userDisplay, timeWithPossibleEdited, msgID
             ));
 
         const messageEditButtonRef = $("#" + msgID + "_edit");
         messageEditButtonRef.on("click", e => {
             e.preventDefault();
-            alert("Are you sure you want to edit this message?");
             const existingMessageText =  $("#" + msgID + "_message_text");
             $("#" + msgID + "_messages")
                 .append(htmlGenerator.createEditBoxHTML(msgID, existingMessageText[0].innerText));
@@ -128,9 +133,13 @@ function addMessage(data) {
     }
     else if (isAdmin) {
         // is admin, add x
+        let timeWithPossibleEdited = timeConverter(time);
+        if (edited === 'true') {
+            timeWithPossibleEdited  += " * edited";
+        }
         messageList.insertAdjacentHTML('beforeend',
             htmlGenerator.createMessageHTMLAdminMessage(
-                userPhotoURL, msg, userDisplay, time, msgID
+                userPhotoURL, msg, userDisplay, timeWithPossibleEdited, msgID
             ));
 
         const adminDeleteButtonRef = $("#" + msgID + "_delete");
@@ -149,8 +158,12 @@ function addMessage(data) {
     }
     else {
         // normal user and not my message
+        let timeWithPossibleEdited = timeConverter(time);
+        if (edited === 'true') {
+            timeWithPossibleEdited  += " * edited";
+        }
         messageList.insertAdjacentHTML('beforeend',
-            htmlGenerator.createMessageHTML(userPhotoURL, msg, userDisplay, time));
+            htmlGenerator.createMessageHTML(userPhotoURL, msg, userDisplay, timeWithPossibleEdited));
     }
 
     messageList.scrollTop = messageList.scrollHeight;
@@ -162,7 +175,7 @@ function editMessage(e, msgID) {
     if (e.key === "Enter") {
         set(ref(db, currentChannelAndMessagePath + "/msg"), editBoxRef.val());
         set(ref(db, currentChannelAndMessagePath + "/edited"), "true");
-        set(ref(db, currentChannelAndMessagePath + "/time"), getTime() + " edited");
+        set(ref(db, currentChannelAndMessagePath + "/time"), Date.now());
         editBoxRef.hide();
         $("#"+ msgID + "_message_text").show();
     }
@@ -348,7 +361,7 @@ function init(user, channelName, authorize) {
         const { history, msg, ownerID, reactions,
             time, userDisplay, userPhotoURL, edited } = data.val();
 
-        $("#" + data.key + "_posttime").html(time);
+        $("#" + data.key + "_posttime").html(timeConverter(time) + " * edited");
         $("#" + data.key + "_message_text").html(msg);
     })
 
@@ -368,4 +381,19 @@ function init(user, channelName, authorize) {
     $("#changeDisplayName").on("click", e => {
         alert("doesn't work yet!");
     })
+}
+
+
+// stolen from https://stackoverflow.com/questions/847185/convert-a-unix-timestamp-to-time-in-javascript
+function timeConverter(timestamp) {
+    const a = new Date(timestamp);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const year = a.getFullYear();
+    const month = months[a.getMonth()];
+    const date = a.getDate();
+    const hour = a.getHours();
+    let min = a.getMinutes();
+    if (min < 10)
+        min = "0" + min;
+    return hour + ':' + min + ' ' + month + ' ' + date + ', ' + year;
 }
