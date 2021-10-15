@@ -33,7 +33,6 @@ const authorize = fbauth.getAuth(app);
 console.log(authorize);
 const allChannelsRef = ref(db, "channels/");
 let channelName = "general";
-let channelRef = ref(db, "channels/" + channelName);
 let isAdmin = false;
 let serverName = "main";
 let serverRef = ref(db, "servers/");
@@ -76,7 +75,7 @@ function sendMessage(text) {
         "userPhotoURL": user.photoURL,
         "edited": "false"
     };
-    const newMessageRef = push(channelRef);
+    const newMessageRef = push(ref(db, "servers/" + serverName + "/channels/" + channelName));
     set(newMessageRef, message);
     clearInputBox();
 }
@@ -170,7 +169,7 @@ function addMessage(data) {
 }
 
 function editMessage(e, msgID) {
-    const currentChannelAndMessagePath = "channels/" + channelName + "/" + msgID;
+    const currentChannelAndMessagePath = "/servers/" + serverName + "/channels/" + channelName + "/" + msgID;
     const editBoxRef = $("#" + msgID + "_editBox");
     if (e.key === "Enter") {
         set(ref(db, currentChannelAndMessagePath + "/msg"), editBoxRef.val());
@@ -323,7 +322,7 @@ function tearDown() {
 function init(user, channelName, authorize) {
 
     //check user role
-    onValue(ref(db, `/users/${authorize.currentUser.uid}/admin`),
+    onValue(ref(db, `server/${serverName}/users/${authorize.currentUser.uid}/admin`),
         ss => {
             isAdmin = !!ss.val();
     });
@@ -355,9 +354,9 @@ function init(user, channelName, authorize) {
     onChildAdded(allChannelsRef, channel => addChannel(channel));
 
     // add event listener for messages in current channel
-    onChildAdded(channelRef, data => addMessage(data));
+    onChildAdded(ref(db, "servers/" + serverName + "/channels/" + channelName), data => addMessage(data));
 
-    onChildChanged(channelRef, data => {
+    onChildChanged(ref(db, "servers/" + serverName + "/channels/" + channelName), data => {
         const { history, msg, ownerID, reactions,
             time, userDisplay, userPhotoURL, edited } = data.val();
 
