@@ -201,11 +201,15 @@ function addServer(server) {
     }
 }
 
-function addUser(user) {
+function addUser(data) {
+    const {admin, displayName, online, role, photoURL} = data.val();
+
     const userList = document.getElementById("users-list");
-    if (!!$("#" + user.displayName)) {
+    console.log("in addUser");
+    console.log(displayName);
+    if (!!$("#" + displayName)) {
         userList.insertAdjacentHTML('beforeend',
-            htmlGenerator.createOtherUserHTML(user));
+            htmlGenerator.createOtherUserHTML(displayName, photoURL, online));
     }
 }
 
@@ -247,10 +251,12 @@ function loginWithEmailAndPassword(email, password) {
                 "displayName" : "",
                 "role" : "",
                 "admin" : "false",
-                "online" : "true"
+                "online" : "true",
+                "photoURL" : "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
             });
             let newUserJSON = JSON.parse(JSONString);
             newUserJSON.displayName = user.displayName;
+            newUserJSON.photoURL = user.photoURL;
             set(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid), newUserJSON);
         })
         .catch(function (error) {
@@ -269,10 +275,12 @@ function loginWithGoogle() {
                 "displayName" : "",
                 "role" : "",
                 "admin" : "false",
-                "online" : "true"
+                "online" : "true",
+                "photoURL" : "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
             });
             let newUserJSON = JSON.parse(JSONString);
             newUserJSON.displayName = user.displayName;
+            newUserJSON.photoURL = user.photoURL;
             set(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid), newUserJSON);
         }).catch(error => {
         console.log(error.code);
@@ -300,7 +308,8 @@ function register(register_email, register_password, retype_password, displayNam
                         "displayName" : "",
                         "role" : "",
                         "admin" : "false",
-                        "online" : "true"
+                        "online" : "true",
+                        "photoURL" : "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
                     });
                     let newUserJSON = JSON.parse(JSONString);
                     newUserJSON.displayName = displayName;
@@ -350,7 +359,7 @@ function init(user, channelName, authorize) {
 
     $("#chat").removeClass("d-none");
     $("#auth-container").addClass("d-none");
-    if ($("#" + user.displayName) != null) {
+    if ($("#current-" + user.displayName) != null) {
         $("#current-user-info").append(htmlGenerator.createCurrentUserHTML(user));
         $("#currentUserActions").on("click", e => {
             const dropUpContent = $("#dropUpContent");
@@ -383,7 +392,7 @@ function init(user, channelName, authorize) {
     onChildAdded(ref(db, "servers/" + serverName + "/channels/" + channelName), data => addMessage(data));
 
     // add event listener for users in current server
-    //onChildAdded("servers/" + serverName + "/users/", user => addUser(user));
+    onChildAdded(ref(db, "servers/" + serverName + "/users/"), data => addUser(data));
 
     onChildChanged(ref(db, "servers/" + serverName + "/channels/" + channelName), data => {
         const { history, msg, ownerID, reactions,
@@ -397,14 +406,16 @@ function init(user, channelName, authorize) {
     // Set up drop up user menu
     $("#logout").on("click", e => {
         // set user to offline
-        set(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid.toString() + "/online"), false);
+        set(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid + "/online"), false)
+            .then(
+                fbauth.signOut(authorize)
+                    .then(function() {
+                        console.log("log out successful");
+                    }, function(error) {
+                        console.log(error);
+                    })
+            );
 
-        fbauth.signOut(authorize)
-            .then(function() {
-                console.log("log out successful");
-            }, function(error) {
-                console.log(error);
-            });
     })
     $("#changePassword").on("click", e => {
         alert("doesn't work yet!");
