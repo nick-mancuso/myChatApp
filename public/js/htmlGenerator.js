@@ -2,7 +2,7 @@ export function createChannelHTML(channelName) {
     return `
         <div class="channel-container">
             <p class="channel-name" id="${channelName}">
-               # ${channelName}
+               <a href="#" style="text-decoration: none;"># ${channelName}</a>
             </p>
         </div>
     `;
@@ -12,7 +12,7 @@ export function createServerHTML(serverName) {
     return `
         <div class="channel-container">
             <p class="channel-name" id="${serverName}">
-               ${serverName}
+               <a href="#" style="text-decoration: none;">${serverName}</a>
             </p>
         </div>
     `;
@@ -22,7 +22,7 @@ export function createOtherUserHTML(user) {
     return `
         <div class="user-container">
             <i class="fa fa-circle text-success"></i>
-            ${user.displayName}
+            <a href="#" style="text-decoration: none;">${user.displayName}</a>
         </div>
     `;
 }
