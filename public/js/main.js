@@ -26,17 +26,17 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const allChannelsPrefix = "channels/";
+//const allChannelsPrefix = "channels/";
 
 const db = getDatabase();
 const authorize = fbauth.getAuth(app);
 console.log(authorize);
-const allChannelsRef = ref(db, allChannelsPrefix);
+const allChannelsRef = ref(db, "channels/");
 let channelName = "general";
-let channelRef = ref(db, allChannelsPrefix + channelName);
+let channelRef = ref(db, "channels/" + channelName);
 let isAdmin = false;
-let usersRef = ref(db, `/users`);
-
+let serverName = "main";
+let serverRef = ref(db, "servers/");
 
 let user;
 
@@ -127,7 +127,7 @@ function addMessage(data) {
         deleteButtonRef.on("click", e => {
             e.preventDefault();
             alert("Are you sure you want to delete this message?");
-            remove(ref(db, allChannelsPrefix + channelName + "/" + msgID));
+            remove(ref(db, "channels/" + channelName + "/" + msgID));
             $("#" + msgID + "_message").remove();
         });
     }
@@ -147,7 +147,7 @@ function addMessage(data) {
             if (isAdmin) {
                 e.preventDefault();
                 alert("Are you sure you want to delete this message?");
-                remove(ref(db, allChannelsPrefix + channelName + "/" + msgID))
+                remove(ref(db, "channels/" + channelName + "/" + msgID))
                     .then($("#" + msgID + "_message").remove())
                     .catch(e => {
                         console.log(e);
@@ -170,7 +170,7 @@ function addMessage(data) {
 }
 
 function editMessage(e, msgID) {
-    const currentChannelAndMessagePath = allChannelsPrefix + channelName + "/" + msgID;
+    const currentChannelAndMessagePath = "channels/" + channelName + "/" + msgID;
     const editBoxRef = $("#" + msgID + "_editBox");
     if (e.key === "Enter") {
         set(ref(db, currentChannelAndMessagePath + "/msg"), editBoxRef.val());
@@ -233,7 +233,7 @@ function loginWithEmailAndPassword(email, password) {
             });
             let newUserJSON = JSON.parse(JSONString);
             newUserJSON.displayName = user.displayName;
-            set(ref(db, "/users/" + user.auth.lastNotifiedUid), newUserJSON);
+            set(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid), newUserJSON);
         })
         .catch(function (error) {
             console.log(error.code);
@@ -254,7 +254,7 @@ function loginWithGoogle() {
             });
             let newUserJSON = JSON.parse(JSONString);
             newUserJSON.displayName = user.displayName;
-            set(ref(db, "/users/" + user.auth.lastNotifiedUid), newUserJSON);
+            set(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid), newUserJSON);
         }).catch(error => {
         console.log(error.code);
         console.log(error.message);
@@ -286,7 +286,7 @@ function register(register_email, register_password, retype_password, displayNam
                     newUserJSON.displayName = displayName;
                     console.log("displayName");
                     console.log(displayName);
-                    set(ref(db, "/users/" + user.auth.lastNotifiedUid), newUserJSON);
+                    set(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid), newUserJSON);
 
                 }
             })
