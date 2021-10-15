@@ -20,7 +20,7 @@ export function createServerHTML(serverName) {
 
 export function createOtherUserHTML(user) {
     return `
-        <div class="user-container">
+        <div class="user-container" id="${user.displayName}">
             <i class="fa fa-circle text-success"></i>
             <a href="#" style="text-decoration: none;">${user.displayName}</a>
         </div>

@@ -13,6 +13,7 @@ import {
 import * as fbauth from "https://www.gstatic.com/firebasejs/9.0.1/firebase-auth.js";
 /* Inspired by https://firebase.google.com/docs */
 import * as htmlGenerator from "./htmlGenerator.js";
+import {createOtherUserHTML} from "./htmlGenerator.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAdpaGbpdvZFS_J5BAPLVZxVW_vUlUVzbk",
@@ -186,18 +187,25 @@ function editMessage(e, msgID) {
 
 function addChannel(channel) {
     const channelList = document.getElementById("channelList");
-    if ($("#" + channel.key) != null) {
+    if (!!$("#" + channel.key)) {
         channelList.insertAdjacentHTML('beforeend',
             htmlGenerator.createChannelHTML(channel.key));
     }
 }
 
 function addServer(server) {
-    console.log("in addserver");
-    const channelList = document.getElementById("serverList");
-    if ($("#" + server.key) != null) {
-        channelList.insertAdjacentHTML('beforeend',
+    const serverList = document.getElementById("serverList");
+    if (!!$("#" + server.key)) {
+        serverList.insertAdjacentHTML('beforeend',
             htmlGenerator.createServerHTML(server.key));
+    }
+}
+
+function addUser(user) {
+    const userList = document.getElementById("users-list");
+    if (!!$("#" + user.displayName)) {
+        userList.insertAdjacentHTML('beforeend',
+            htmlGenerator.createOtherUserHTML(user));
     }
 }
 
@@ -208,12 +216,12 @@ document.getElementById("send-button")
         if (text !== "") {
             sendMessage(text);
         }
-})
+    })
 
 
 document.getElementById("loginWithGoogle")
     .addEventListener("click", e => {
-    loginWithGoogle();
+        loginWithGoogle();
     })
 
 document.getElementById("login-form")
@@ -238,7 +246,8 @@ function loginWithEmailAndPassword(email, password) {
             let JSONString = JSON.stringify({
                 "displayName" : "",
                 "role" : "",
-                "admin" : "false"
+                "admin" : "false",
+                "online" : "true"
             });
             let newUserJSON = JSON.parse(JSONString);
             newUserJSON.displayName = user.displayName;
@@ -257,9 +266,10 @@ function loginWithGoogle() {
         .then(data => {
             user = data.user;
             let JSONString = JSON.stringify({
-                    "displayName" : "",
-                    "role" : "",
-                    "admin" : "false"
+                "displayName" : "",
+                "role" : "",
+                "admin" : "false",
+                "online" : "true"
             });
             let newUserJSON = JSON.parse(JSONString);
             newUserJSON.displayName = user.displayName;
@@ -289,7 +299,8 @@ function register(register_email, register_password, retype_password, displayNam
                     let JSONString = JSON.stringify({
                         "displayName" : "",
                         "role" : "",
-                        "admin" : "false"
+                        "admin" : "false",
+                        "online" : "true"
                     });
                     let newUserJSON = JSON.parse(JSONString);
                     newUserJSON.displayName = displayName;
@@ -335,7 +346,7 @@ function init(user, channelName, authorize) {
     onValue(ref(db, `server/${serverName}/users/${authorize.currentUser.uid}/admin`),
         ss => {
             isAdmin = !!ss.val();
-    });
+        });
 
     $("#chat").removeClass("d-none");
     $("#auth-container").addClass("d-none");
@@ -371,6 +382,9 @@ function init(user, channelName, authorize) {
     // add event listener for messages in current channel
     onChildAdded(ref(db, "servers/" + serverName + "/channels/" + channelName), data => addMessage(data));
 
+    // add event listener for users in current server
+    //onChildAdded("servers/" + serverName + "/users/", user => addUser(user));
+
     onChildChanged(ref(db, "servers/" + serverName + "/channels/" + channelName), data => {
         const { history, msg, ownerID, reactions,
             time, userDisplay, userPhotoURL, edited } = data.val();
@@ -382,6 +396,9 @@ function init(user, channelName, authorize) {
 
     // Set up drop up user menu
     $("#logout").on("click", e => {
+        // set user to offline
+        set(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid.toString() + "/online"), false);
+
         fbauth.signOut(authorize)
             .then(function() {
                 console.log("log out successful");
