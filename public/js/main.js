@@ -27,7 +27,6 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-//const allChannelsPrefix = "channels/";
 
 const db = getDatabase();
 const authorize = fbauth.getAuth(app);
@@ -35,22 +34,8 @@ console.log(authorize);
 let channelName = "general";
 let isAdmin = false;
 let serverName = "main";
-let serverRef = ref(db, "servers/");
 
 let user;
-
-// let message = {
-//     "msgIDHERE" : {
-//         "history" : {
-//             "uuid" : "adfsdff"
-//         },
-//         "msg" : "This is a message",
-//         "ownerID" : "longID",
-//         "reactions" : "later",
-//         "time" : "mytime",
-//         "userDisplay" : "nick"
-//     }
-// };
 
 function getTime() {
     const date = new Date();
@@ -243,49 +228,37 @@ document.getElementById("register-form")
     })
 
 function loginWithEmailAndPassword(email, password) {
-
     fbauth.signInWithEmailAndPassword(authorize, email, password)
-        .then(data => {
-            user = data.user;
-            let JSONString = JSON.stringify({
-                "displayName" : "",
-                "role" : "",
-                "admin" : "false",
-                "online" : "true",
-                "photoURL" : "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
-            });
-            let newUserJSON = JSON.parse(JSONString);
-            newUserJSON.displayName = user.displayName;
-            newUserJSON.photoURL = user.photoURL;
-            set(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid), newUserJSON);
-        })
+        .then(data => handleOAuth(data))
         .catch(function (error) {
             console.log(error.code);
             console.log(error.message);
         });
 }
 
-
 function loginWithGoogle() {
     let provider = new fbauth.GoogleAuthProvider();
     fbauth.signInWithPopup(authorize, provider)
-        .then(data => {
-            user = data.user;
-            let JSONString = JSON.stringify({
-                "displayName" : "",
-                "role" : "",
-                "admin" : "false",
-                "online" : "true",
-                "photoURL" : "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
-            });
-            let newUserJSON = JSON.parse(JSONString);
-            newUserJSON.displayName = user.displayName;
-            newUserJSON.photoURL = user.photoURL;
-            set(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid), newUserJSON);
-        }).catch(error => {
-        console.log(error.code);
-        console.log(error.message);
+        .then(data => handleOAuth(data))
+        .catch(error => {
+            console.log(error.code);
+            console.log(error.message);
     });
+}
+
+function handleOAuth(data) {
+    user = data.user;
+    let JSONString = JSON.stringify({
+        "displayName" : "",
+        "role" : "",
+        "admin" : "false",
+        "online" : "true",
+        "photoURL" : "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
+    });
+    let newUserJSON = JSON.parse(JSONString);
+    newUserJSON.displayName = user.displayName;
+    newUserJSON.photoURL = user.photoURL;
+    set(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid), newUserJSON);
 }
 
 function register(register_email, register_password, retype_password, displayName) {
@@ -373,13 +346,6 @@ function init(user, channelName, authorize) {
 
         });
     }
-
-    // onChildAdded(usersRef, uid => {
-    //
-    //     $("#users-list").append(htmlGenerator.createOtherUserHTML(user));
-    //
-    // });
-
     $("#channelName").text("# " + channelName)
 
     // add event listener for channels list
@@ -402,7 +368,6 @@ function init(user, channelName, authorize) {
         $("#" + data.key + "_message_text").html(msg);
     })
 
-
     // Set up drop up user menu
     $("#logout").on("click", e => {
         // set user to offline
@@ -424,7 +389,6 @@ function init(user, channelName, authorize) {
         alert("doesn't work yet!");
     })
 }
-
 
 // stolen from https://stackoverflow.com/questions/847185/convert-a-unix-timestamp-to-time-in-javascript
 function timeConverter(timestamp) {
