@@ -31,7 +31,6 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase();
 const authorize = fbauth.getAuth(app);
 console.log(authorize);
-const allChannelsRef = ref(db, "channels/");
 let channelName = "general";
 let isAdmin = false;
 let serverName = "main";
@@ -187,8 +186,19 @@ function editMessage(e, msgID) {
 
 function addChannel(channel) {
     const channelList = document.getElementById("channelList");
-    channelList.insertAdjacentHTML('beforeend',
-        htmlGenerator.createChannelHTML(channel.key))
+    if ($("#" + channel.key) != null) {
+        channelList.insertAdjacentHTML('beforeend',
+            htmlGenerator.createChannelHTML(channel.key));
+    }
+}
+
+function addServer(server) {
+    console.log("in addserver");
+    const channelList = document.getElementById("serverList");
+    if ($("#" + server.key) != null) {
+        channelList.insertAdjacentHTML('beforeend',
+            htmlGenerator.createServerHTML(server.key));
+    }
 }
 
 // setup listeners
@@ -329,18 +339,20 @@ function init(user, channelName, authorize) {
 
     $("#chat").removeClass("d-none");
     $("#auth-container").addClass("d-none");
-    $("#current-user-info").append(htmlGenerator.createCurrentUserHTML(user));
-    $("#currentUserActions").on("click", e => {
-        const dropUpContent = $("#dropUpContent");
+    if ($("#" + user.displayName) != null) {
+        $("#current-user-info").append(htmlGenerator.createCurrentUserHTML(user));
+        $("#currentUserActions").on("click", e => {
+            const dropUpContent = $("#dropUpContent");
 
-        if (dropUpContent.hasClass("d-none")) {
-            dropUpContent.removeClass("d-none");
-        }
-        else {
-            dropUpContent.addClass("d-none");
-        }
+            if (dropUpContent.hasClass("d-none")) {
+                dropUpContent.removeClass("d-none");
+            }
+            else {
+                dropUpContent.addClass("d-none");
+            }
 
-    })
+        });
+    }
 
     // onChildAdded(usersRef, uid => {
     //
@@ -351,7 +363,10 @@ function init(user, channelName, authorize) {
     $("#channelName").text("# " + channelName)
 
     // add event listener for channels list
-    onChildAdded(allChannelsRef, channel => addChannel(channel));
+    onChildAdded(ref(db, "servers/" + serverName + "/channels/"), channel => addChannel(channel));
+
+    // add event listener for servers list
+    onChildAdded(ref(db, "servers/"), server => addServer(server));
 
     // add event listener for messages in current channel
     onChildAdded(ref(db, "servers/" + serverName + "/channels/" + channelName), data => addMessage(data));

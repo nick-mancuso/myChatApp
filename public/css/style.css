@@ -240,7 +240,7 @@ ul {
     height: 90%;
 }
 
-#channels-header {
+#channels-header #servers-header {
     font-size: 9pt;
     text-align: center;
     color: lightgrey;

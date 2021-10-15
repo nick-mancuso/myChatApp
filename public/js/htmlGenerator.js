@@ -1,8 +1,18 @@
 export function createChannelHTML(channelName) {
     return `
         <div class="channel-container">
-            <p class="channel-name">
+            <p class="channel-name" id="${channelName}">
                # ${channelName}
+            </p>
+        </div>
+    `;
+}
+
+export function createServerHTML(serverName) {
+    return `
+        <div class="channel-container">
+            <p class="channel-name" id="${serverName}">
+               ${serverName}
             </p>
         </div>
     `;
@@ -19,7 +29,7 @@ export function createOtherUserHTML(user) {
 
 export function createCurrentUserHTML(user) {
     return `
-        <div class="current-user-container">
+        <div class="current-user-container" id="${user.displayName}">
             <img class="user-img" src="${user.photoURL}" onerror="this.src='https://www.gravatar.com/avatar/?d=retro'" alt="not found">
             ${user.displayName}
             <div class="dropup">
