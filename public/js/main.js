@@ -171,16 +171,25 @@ function editMessage(e, msgID) {
 
 
 function addChannel(channel) {
-    const channelList = document.getElementById("channelList");
-    if (!!$("#" + channel.key)) {
+    const channelList = document.getElementById("channelsGoHere");
+    if (!$("#" + channel.key).length) {
         channelList.insertAdjacentHTML('beforeend',
             htmlGenerator.createChannelHTML(channel.key));
+        //set up link for indv channel
+        $("#" + channel.key).on("click", ev => {
+            ev.preventDefault();
+            console.log("clicked channel name...");
+            channelName = channel.key;
+            tearDown();
+            init(user, channel.key, authorize);
+        });
     }
+
 }
 
 function addServer(server) {
-    const serverList = document.getElementById("serverList");
-    if (!!$("#" + server.key)) {
+    const serverList = document.getElementById("serversGoHere");
+    if (!$("#" + server.key).length) {
         serverList.insertAdjacentHTML('beforeend',
             htmlGenerator.createServerHTML(server.key));
     }
@@ -190,7 +199,7 @@ function addUser(data) {
     const {admin, displayName, online, role, photoURL} = data.val();
 
     const userList = document.getElementById("users-list");
-    if (!!$("#" + displayName)) {
+    if (!$("#" + displayName).length) {
         userList.insertAdjacentHTML('beforeend',
             htmlGenerator.createOtherUserHTML(displayName, photoURL, online));
     }
@@ -345,6 +354,8 @@ function tearDown() {
     $("#current-user-info").empty();
     $("#users-list").empty();
     $("#channelName").text("");
+    $("#messageList").empty();
+    $("#channelsGoHere").innerHTML = '';
 }
 
 function init(user, channelName, authorize) {
@@ -460,9 +471,27 @@ function init(user, channelName, authorize) {
             const currentChannelsPath = "/servers/" + serverName + "/channels/";
             const addChannelBoxRef = $("#newChannelName");
             if (e.key === "Enter") {
-                //set(ref(db, currentChannelsPath), );
-                console.log(addChannelBoxRef.val());
+                const newChannelName = addChannelBoxRef.val();
                 $("#newChannelForm").remove();
+
+                let message = {
+                    "history" : { },
+                    "msg" : `Welcome to the #${newChannelName} channel!`,
+                    "ownerID" : "new-channel-bot",
+                    "reactions" : "",
+                    "time" : Date.now(),
+                    "userDisplay" : "new-channel-bot",
+                    "userPhotoURL": "https://gravatar.com/avatar/e6be0c37c31d874bdf1ed8496ec1f8d9?s=400&d=robohash&r=x",
+                    "edited": "false"
+                };
+                console.log("servers/" + serverName + "/channels")
+
+                const newChannelRef = push(ref(db, "servers/" + serverName + "/channels/" + newChannelName));
+                set(newChannelRef, message);
+                channelName = newChannelName;
+                tearDown();
+                init(user, newChannelName, authorize);
+
             }
             if (e.key === "Escape") {
                 console.log("hit esc key...");
