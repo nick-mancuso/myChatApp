@@ -190,8 +190,6 @@ function addUser(data) {
     const {admin, displayName, online, role, photoURL} = data.val();
 
     const userList = document.getElementById("users-list");
-    console.log("in addUser");
-    console.log(displayName);
     if (!!$("#" + displayName)) {
         userList.insertAdjacentHTML('beforeend',
             htmlGenerator.createOtherUserHTML(displayName, photoURL, online));
@@ -248,17 +246,30 @@ function loginWithGoogle() {
 
 function handleOAuth(data) {
     user = data.user;
-    let JSONString = JSON.stringify({
-        "displayName" : "",
-        "role" : "",
-        "admin" : "false",
-        "online" : "true",
-        "photoURL" : "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
-    });
-    let newUserJSON = JSON.parse(JSONString);
-    newUserJSON.displayName = user.displayName;
-    newUserJSON.photoURL = user.photoURL;
-    set(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid), newUserJSON);
+    get(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid))
+        .then(snapshot => {
+            if (snapshot.exists()) {
+                // user exists in db
+                set(ref(db, "servers/" + serverName + "/users/"
+                    + user.auth.lastNotifiedUid + "/online"), true);
+            }
+            else {
+                // user doesn't exist in db
+                let JSONString = JSON.stringify({
+                    "displayName" : "",
+                    "role" : "",
+                    "admin" : "false",
+                    "online" : true,
+                    "photoURL" : "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
+                });
+                let newUserJSON = JSON.parse(JSONString);
+                newUserJSON.displayName = user.displayName;
+                newUserJSON.photoURL = user.photoURL;
+                set(ref(db, "servers/" + serverName + "/users/"
+                    + user.auth.lastNotifiedUid), newUserJSON);
+            }
+        });
+
 }
 
 function register(register_email, register_password, retype_password, displayName) {
@@ -281,13 +292,14 @@ function register(register_email, register_password, retype_password, displayNam
                         "displayName" : "",
                         "role" : "",
                         "admin" : "false",
-                        "online" : "true",
+                        "online" : true,
                         "photoURL" : "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
                     });
                     let newUserJSON = JSON.parse(JSONString);
                     newUserJSON.displayName = displayName;
                     console.log("displayName");
                     console.log(displayName);
+                    isAdmin = false;
                     set(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid), newUserJSON);
 
                 }
@@ -325,9 +337,12 @@ function tearDown() {
 function init(user, channelName, authorize) {
 
     //check user role
-    onValue(ref(db, `server/${serverName}/users/${authorize.currentUser.uid}/admin`),
+    onValue(ref(db, "servers/" + serverName + "/users/" + authorize.currentUser.uid),
         ss => {
-            isAdmin = !!ss.val();
+        const {admin, displayName, online, role, photoURL} = ss.val();
+        console.log("checking admin");
+        console.log(admin);
+            isAdmin = !!admin;
         });
 
     $("#chat").removeClass("d-none");
@@ -360,6 +375,13 @@ function init(user, channelName, authorize) {
     // add event listener for users in current server
     onChildAdded(ref(db, "servers/" + serverName + "/users/"), data => addUser(data));
 
+    // watch for login status
+    onChildChanged(ref(db, "servers/" + serverName + "/users/"),  data => {
+        const {admin, displayName, online, role, photoURL} = data.val();
+        $("#" + displayName).remove();
+        addUser(data);
+    });
+
     onChildChanged(ref(db, "servers/" + serverName + "/channels/" + channelName), data => {
         const { history, msg, ownerID, reactions,
             time, userDisplay, userPhotoURL, edited } = data.val();
@@ -371,7 +393,11 @@ function init(user, channelName, authorize) {
     // Set up drop up user menu
     $("#logout").on("click", e => {
         // set user to offline
-        set(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid + "/online"), false)
+        e.preventDefault();
+        console.log(authorize.currentUser.uid);
+        const uuid = authorize.currentUser.uid;
+        console.log("servers/" + serverName + "/users/" + uuid + "/online");
+        set(ref(db, "servers/" + serverName + "/users/" + uuid + "/online"), false)
             .then(
                 fbauth.signOut(authorize)
                     .then(function() {
@@ -379,7 +405,9 @@ function init(user, channelName, authorize) {
                     }, function(error) {
                         console.log(error);
                     })
-            );
+            ).catch(err => {
+                console.log(err);
+        });
 
     })
     $("#changePassword").on("click", e => {
