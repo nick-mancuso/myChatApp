@@ -131,7 +131,7 @@ function addMessage(data) {
             if (isAdmin) {
                 e.preventDefault();
                 alert("Are you sure you want to delete this message?");
-                remove(ref(db, "channels/" + channelName + "/" + msgID))
+                remove(ref(db, "servers/" + serverName + "/channels/" + channelName + "/" + msgID))
                     .then($("#" + msgID + "_message").remove())
                     .catch(e => {
                         console.log(e);
@@ -319,8 +319,21 @@ function register(register_email, register_password, retype_password, displayNam
 
 fbauth.onAuthStateChanged(authorize, userInfo => {
     if (!!userInfo) {
-        init(userInfo, channelName, authorize);
-        user = userInfo;
+        console.log(JSON.stringify(userInfo))
+
+        //check user role
+        onValue(ref(db, "servers/" + serverName + "/users/" + authorize.currentUser.uid),
+            ss => {
+                const {admin, displayName, online, role, photoURL} = ss.val();
+                console.log("checking admin");
+                console.log(admin);
+                isAdmin = !!admin;
+
+                init(userInfo, channelName, authorize);
+                user = userInfo;
+            });
+
+
     } else {
         tearDown();
     }
@@ -335,15 +348,6 @@ function tearDown() {
 }
 
 function init(user, channelName, authorize) {
-
-    //check user role
-    onValue(ref(db, "servers/" + serverName + "/users/" + authorize.currentUser.uid),
-        ss => {
-        const {admin, displayName, online, role, photoURL} = ss.val();
-        console.log("checking admin");
-        console.log(admin);
-            isAdmin = !!admin;
-        });
 
     $("#chat").removeClass("d-none");
     $("#auth-container").addClass("d-none");
