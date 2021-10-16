@@ -416,9 +416,59 @@ function init(user, channelName, authorize) {
     })
     $("#changePassword").on("click", e => {
         alert("doesn't work yet!");
-    })
+    });
     $("#changeDisplayName").on("click", e => {
         alert("doesn't work yet!");
+    });
+
+    $("#addServerButton").on("click", e => {
+        e.preventDefault();
+        document.getElementById("newServerFormDiv")
+            .insertAdjacentHTML("beforebegin", `
+                <form action="" id="newServerForm">
+                  <input id="newServerName" style="font-size: 10pt;" 
+                        type="text" placeholder="Enter new server name">
+                </form>
+            `);
+        $(document).on("keyup", e => {
+            e.preventDefault();
+            const currentServerPath = "/servers/" + serverName;
+            const addServerBoxRef = $("#newServerName");
+            if (e.key === "Enter") {
+                // set(ref(db, currentChannelAndMessagePath + "/msg"), editBoxRef.val());
+                console.log(addServerBoxRef.val());
+                $("#newServerForm").remove();
+            }
+            if (e.key === "Escape") {
+                //editBoxRef.remove();
+                $("#newServerForm").remove();
+            }
+        })
+    })
+
+    $("#addChannelButton").on("click", e => {
+        e.preventDefault();
+        document.getElementById("newChannelFormDiv")
+            .insertAdjacentHTML("beforebegin", `
+                <form action="" id="newChannelForm">
+                  <input id="newChannelName" style="font-size: 10pt;" 
+                        type="text" placeholder="Enter new channel name">
+                </form>
+            `);
+        $(document).on("keyup", e => {
+            e.preventDefault();
+            const currentChannelsPath = "/servers/" + serverName + "/channels/";
+            const addChannelBoxRef = $("#newChannelName");
+            if (e.key === "Enter") {
+                //set(ref(db, currentChannelsPath), );
+                console.log(addChannelBoxRef.val());
+                $("#newChannelForm").remove();
+            }
+            if (e.key === "Escape") {
+                console.log("hit esc key...");
+                $("#newChannelForm").remove()
+            }
+        })
     })
 }
 

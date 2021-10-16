@@ -22,7 +22,9 @@ export function createOtherUserHTML(displayName, photoURL, online) {
     const isOnlineCircle = !!online ? "text-success" : "text-fail";
     return `
         <div class="user-container" id="${displayName}">
-            <img class="user-img" style="height: 20px; width: 20px;" src="${photoURL}" onerror="this.src='https://www.gravatar.com/avatar/?d=retro'" alt="not found">
+            <img class="user-img" style="height: 20px; width: 20px;"
+                src="${photoURL}" onerror="this.src='https://www.gravatar.com/avatar/?d=retro'"
+                alt="not found">
             <a href="#" style="text-decoration: none;">${displayName}</a>
             <i class="fa fa-circle ${isOnlineCircle}" style="font-size: 9pt;"></i>
         </div>
