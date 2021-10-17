@@ -164,7 +164,7 @@ function editMessage(e, msgID) {
         $("#"+ msgID + "_message_text").show();
     }
     if (e.key === "Escape") {
-        editBoxRef.remove();
+        editBoxRef.hide();
         $("#"+ msgID + "_message_text").show();
     }
 }
