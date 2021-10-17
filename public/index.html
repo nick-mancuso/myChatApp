@@ -22,7 +22,7 @@
 <body>
 <div id="auth-container">
     <div class="content" role="main">
-        <div class="login" id="login">
+        <div class="login" id="login" style="padding: 30px">
             <h2 class="title">Register</h2>
             <form id="register-form">
                 <div class="form-group">
@@ -86,6 +86,20 @@
             <button class="mat-button" id="loginWithGoogle" >
                 Sign in With Google
             </button>
+            <h2 class="title">I forgot my password!</h2>
+            <form id="forgotten-form">
+                <div class="form-group">
+                    <label for="forgotten-email-text">Email</label>
+                    <input
+                            type="text"
+                            class="form-control"
+                            id="forgotten-email-text"
+                            name="email"
+                            placeholder="email"
+                    />
+                </div>
+                <button type="submit" class="mat-button">Send me a password reset email!</button>
+            </form>
         </div>
     </div>
 </div>

@@ -212,27 +212,51 @@ document.getElementById("send-button")
         if (text !== "") {
             sendMessage(text);
         }
-    })
+    });
 
+document.getElementById("forgotten-form")
+    .addEventListener("submit", e => {
+        e.preventDefault();
+        let form = $("#forgotten-form");
+        let input = form.serializeArray();
+        form[0].reset();
+        console.log(input[0].value);
+        handlePasswordReset(input[0].value);
+    });
+
+function handlePasswordReset(emailAddress) {
+    console.log('send me an email son');
+    fbauth.sendPasswordResetEmail(authorize, emailAddress)
+        .then(() => {
+            alert("Recovery email sent!");
+        })
+        .catch((error) => {
+            console.log(error.code);
+            console.log(error.message);
+        });
+}
 
 document.getElementById("loginWithGoogle")
     .addEventListener("click", e => {
         loginWithGoogle();
-    })
+    });
 
 document.getElementById("login-form")
     .addEventListener("submit", e => {
         e.preventDefault();
         let input = $("#login-form").serializeArray();
         loginWithEmailAndPassword(input[0].value, input[1].value);
-    })
+    });
 
 document.getElementById("register-form")
     .addEventListener("submit", e => {
         e.preventDefault();
         let input = $("#register-form").serializeArray();
         register(input[0].value, input[1].value, input[2].value, input[3].value);
-    })
+        for (let i = 0; i < 4; i++) {
+            input[i].reset();
+        }
+    });
 
 function loginWithEmailAndPassword(email, password) {
     fbauth.signInWithEmailAndPassword(authorize, email, password)
