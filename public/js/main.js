@@ -13,7 +13,6 @@ import {
 import * as fbauth from "https://www.gstatic.com/firebasejs/9.0.1/firebase-auth.js";
 /* Inspired by https://firebase.google.com/docs */
 import * as htmlGenerator from "./htmlGenerator.js";
-import {createOtherUserHTML} from "./htmlGenerator.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAdpaGbpdvZFS_J5BAPLVZxVW_vUlUVzbk",
@@ -436,7 +435,6 @@ function init(user, channelName, authorize) {
         // set user to offline
         e.preventDefault();
         const uuid = authorize.currentUser.uid;
-        console.log("servers/" + serverName + "/users/" + uuid + "/online");
         set(ref(db, "servers/" + serverName + "/users/" + uuid + "/online"), false)
             .then(fbauth.signOut(authorize)
                     .then(function() {
