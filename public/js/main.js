@@ -37,26 +37,15 @@ let serverName = "main";
 
 let user;
 
-function getTime() {
-    const date = new Date();
-    return (date.getMonth() + 1) + "/"
-        + date.getDate() + "/"
-        + date.getFullYear() + " @ "
-        + date.getHours() + ":"
-        + date.getMinutes() + ":"
-        + date.getSeconds();
-}
-
-
 function sendMessage(text) {
 
     let message = {
         "history" : { },
-        "msg" : text,
+        "msg" : sanitize(text),
         "ownerID" : user.uid,
         "reactions" : "",
         "time" : Date.now(),
-        "userDisplay" : user.displayName,
+        "userDisplay" : sanitize(user.displayName),
         "userPhotoURL": user.photoURL,
         "edited": "false"
     };
@@ -91,7 +80,7 @@ function addMessage(data) {
 
         messageList.insertAdjacentHTML('beforeend',
             htmlGenerator.createMessageHTMLMyMessage(
-                userPhotoURL, msg, userDisplay, timeWithPossibleEdited, msgID
+                userPhotoURL, sanitize(msg), sanitize(userDisplay), timeWithPossibleEdited, msgID
             ));
 
         const messageEditButtonRef = $("#" + msgID + "_edit");
@@ -99,7 +88,8 @@ function addMessage(data) {
             e.preventDefault();
             const existingMessageText =  $("#" + msgID + "_message_text");
             $("#" + msgID + "_messages")
-                .append(htmlGenerator.createEditBoxHTML(msgID, existingMessageText[0].innerText));
+                .append(htmlGenerator.createEditBoxHTML(msgID,
+                    sanitize(existingMessageText[0].innerText)));
             existingMessageText.hide();
             $(document).on('keyup', function (e) {
                 e.preventDefault();
@@ -123,7 +113,7 @@ function addMessage(data) {
         }
         messageList.insertAdjacentHTML('beforeend',
             htmlGenerator.createMessageHTMLAdminMessage(
-                userPhotoURL, msg, userDisplay, timeWithPossibleEdited, msgID
+                userPhotoURL, sanitize(msg), sanitize(userDisplay), timeWithPossibleEdited, msgID
             ));
 
         const adminDeleteButtonRef = $("#" + msgID + "_delete");
@@ -147,7 +137,7 @@ function addMessage(data) {
             timeWithPossibleEdited  += " * edited";
         }
         messageList.insertAdjacentHTML('beforeend',
-            htmlGenerator.createMessageHTML(userPhotoURL, msg, userDisplay, timeWithPossibleEdited));
+            htmlGenerator.createMessageHTML(userPhotoURL, sanitize(msg), sanitize(userDisplay), timeWithPossibleEdited));
     }
 
     messageList.scrollTop = messageList.scrollHeight;
@@ -157,7 +147,7 @@ function editMessage(e, msgID) {
     const currentChannelAndMessagePath = "/servers/" + serverName + "/channels/" + channelName + "/" + msgID;
     const editBoxRef = $("#" + msgID + "_editBox");
     if (e.key === "Enter") {
-        set(ref(db, currentChannelAndMessagePath + "/msg"), editBoxRef.val());
+        set(ref(db, currentChannelAndMessagePath + "/msg"), sanitize(editBoxRef.val()));
         set(ref(db, currentChannelAndMessagePath + "/edited"), "true");
         set(ref(db, currentChannelAndMessagePath + "/time"), Date.now());
         editBoxRef.hide();
@@ -174,12 +164,11 @@ function addChannel(channel) {
     const channelList = document.getElementById("channelsGoHere");
     if (!$("#" + channel.key).length) {
         channelList.insertAdjacentHTML('beforeend',
-            htmlGenerator.createChannelHTML(channel.key));
+            htmlGenerator.createChannelHTML(sanitize(channel.key)));
         //set up link for indv channel
         $("#" + channel.key).on("click", ev => {
             ev.preventDefault();
-            console.log("clicked channel name...");
-            channelName = channel.key;
+            channelName = sanitize(channel.key);
             tearDown();
             init(user, channel.key, authorize);
         });
@@ -191,12 +180,12 @@ function addServer(server) {
     const serverList = document.getElementById("serversGoHere");
     if (!$("#" + server.key).length) {
         serverList.insertAdjacentHTML('beforeend',
-            htmlGenerator.createServerHTML(server.key));
+            htmlGenerator.createServerHTML(sanitize(server.key)));
 
         //set up link for indv server
         $("#" + server.key).on("click", ev => {
             ev.preventDefault();
-            serverName = server.key;
+            serverName = sanitize(server.key);
             tearDown();
             channelName = "general";
             init(user, "general", authorize);
@@ -210,14 +199,14 @@ function addUser(data) {
     const userList = document.getElementById("usersGoHere");
     if (!$("#" + displayName).length) {
         userList.insertAdjacentHTML('beforeend',
-            htmlGenerator.createOtherUserHTML(displayName, photoURL, online));
+            htmlGenerator.createOtherUserHTML(sanitize(displayName), photoURL, online));
     }
 }
 
 // setup listeners
 document.getElementById("send-button")
     .addEventListener("click", e => {
-        const text = getInputText();
+        const text = sanitize(getInputText());
         if (text !== "") {
             sendMessage(text);
         }
@@ -229,8 +218,7 @@ document.getElementById("forgotten-form")
         let form = $("#forgotten-form");
         let input = form.serializeArray();
         form[0].reset();
-        console.log(input[0].value);
-        handlePasswordReset(input[0].value);
+        handlePasswordReset(sanitize(input[0].value));
     });
 
 function handlePasswordReset(emailAddress) {
@@ -254,14 +242,15 @@ document.getElementById("login-form")
     .addEventListener("submit", e => {
         e.preventDefault();
         let input = $("#login-form").serializeArray();
-        loginWithEmailAndPassword(input[0].value, input[1].value);
+        loginWithEmailAndPassword(sanitize(input[0].value), sanitize(input[1].value));
     });
 
 document.getElementById("register-form")
     .addEventListener("submit", e => {
         e.preventDefault();
         let input = $("#register-form").serializeArray();
-        register(input[0].value, input[1].value, input[2].value, input[3].value);
+        register(sanitize(input[0].value), sanitize(input[1].value),
+            sanitize(input[2].value), sanitize(input[3].value));
         for (let i = 0; i < 4; i++) {
             input[i].reset();
         }
@@ -304,7 +293,7 @@ function handleOAuth(data) {
                 "photoURL" : "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
             });
             let newUserJSON = JSON.parse(JSONString);
-            newUserJSON.displayName = user.displayName;
+            newUserJSON.displayName = sanitize(user.displayName);
             newUserJSON.photoURL = user.photoURL;
             set(ref(db, "servers/" + serverName + "/users/"
                 + user.auth.lastNotifiedUid), newUserJSON);
@@ -337,7 +326,7 @@ function register(register_email, register_password, retype_password, displayNam
                         "photoURL" : "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
                     });
                     let newUserJSON = JSON.parse(JSONString);
-                    newUserJSON.displayName = displayName;
+                    newUserJSON.displayName = sanitize(displayName);
                     isAdmin = false;
                     set(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid),
                         newUserJSON);
@@ -398,7 +387,7 @@ function init(user, channelName, authorize) {
 
     $("#chat").removeClass("d-none");
     $("#auth-container").addClass("d-none");
-    if ($("#current-" + user.displayName) != null) {
+    if (!$("#current-" + user.displayName).length) {
         $("#current-user-info").append(htmlGenerator.createCurrentUserHTML(user));
         $("#currentUserActions").on("click", e => {
             const dropUpContent = $("#dropUpContent");
@@ -446,12 +435,10 @@ function init(user, channelName, authorize) {
     $("#logout").on("click", e => {
         // set user to offline
         e.preventDefault();
-        console.log(authorize.currentUser.uid);
         const uuid = authorize.currentUser.uid;
         console.log("servers/" + serverName + "/users/" + uuid + "/online");
         set(ref(db, "servers/" + serverName + "/users/" + uuid + "/online"), false)
-            .then(
-                fbauth.signOut(authorize)
+            .then(fbauth.signOut(authorize)
                     .then(function() {
                         console.log("log out successful");
                     }, function(error) {
@@ -487,9 +474,7 @@ function init(user, channelName, authorize) {
             e.preventDefault();
             console.log("here");
             const addServerBoxRef = $("#newServerName");
-            let newServerName = addServerBoxRef.val();
-            console.log("new server name");
-            console.log(newServerName);
+            let newServerName = sanitize(addServerBoxRef.val());
             $("#newServerForm").remove();
 
             let message = {
@@ -542,7 +527,7 @@ function init(user, channelName, authorize) {
         $("#newChannelForm").submit(e => {
             e.preventDefault();
             const addChannelBoxRef = $("#newChannelName");
-            let newChannelName = addChannelBoxRef.val();
+            let newChannelName = sanitize(addChannelBoxRef.val());
             $("#newChannelForm").remove();
 
             let message = {
@@ -581,4 +566,19 @@ function timeConverter(timestamp) {
     if (min < 10)
         min = "0" + min;
     return hour + ':' + min + ' ' + month + ' ' + date + ', ' + year;
+}
+
+// stolen from https://stackoverflow.com/a/48226843/13160102
+function sanitize(string) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#x27;',
+        "/": '&#x2F;',
+        "`": '&grave;',
+    };
+    const reg = /[&<>"'/`]/ig;
+    return string.replace(reg, (match)=>(map[match]));
 }
