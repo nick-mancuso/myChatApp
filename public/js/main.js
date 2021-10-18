@@ -192,6 +192,15 @@ function addServer(server) {
     if (!$("#" + server.key).length) {
         serverList.insertAdjacentHTML('beforeend',
             htmlGenerator.createServerHTML(server.key));
+
+        //set up link for indv server
+        $("#" + server.key).on("click", ev => {
+            ev.preventDefault();
+            serverName = server.key;
+            tearDown();
+            channelName = "general";
+            init(user, "general", authorize);
+        });
     }
 }
 
@@ -279,29 +288,28 @@ function loginWithGoogle() {
 
 function handleOAuth(data) {
     user = data.user;
-    get(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid))
-        .then(snapshot => {
-            if (snapshot.exists()) {
-                // user exists in db
-                set(ref(db, "servers/" + serverName + "/users/"
-                    + user.auth.lastNotifiedUid + "/online"), true);
-            }
-            else {
-                // user doesn't exist in db
-                let JSONString = JSON.stringify({
-                    "displayName" : "",
-                    "role" : "",
-                    "admin" : "false",
-                    "online" : true,
-                    "photoURL" : "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
-                });
-                let newUserJSON = JSON.parse(JSONString);
-                newUserJSON.displayName = user.displayName;
-                newUserJSON.photoURL = user.photoURL;
-                set(ref(db, "servers/" + serverName + "/users/"
-                    + user.auth.lastNotifiedUid), newUserJSON);
-            }
-        });
+    onValue(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid), snapshot => {
+        if (snapshot.exists()) {
+            // user exists in db
+            set(ref(db, "servers/" + serverName + "/users/"
+                + user.auth.lastNotifiedUid + "/online"), true);
+        }
+        else {
+            // user doesn't exist in db
+            let JSONString = JSON.stringify({
+                "displayName" : "",
+                "role" : "",
+                "admin" : "false",
+                "online" : true,
+                "photoURL" : "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
+            });
+            let newUserJSON = JSON.parse(JSONString);
+            newUserJSON.displayName = user.displayName;
+            newUserJSON.photoURL = user.photoURL;
+            set(ref(db, "servers/" + serverName + "/users/"
+                + user.auth.lastNotifiedUid), newUserJSON);
+        }
+    });
 
 }
 
@@ -352,10 +360,10 @@ function register(register_email, register_password, retype_password, displayNam
 
 fbauth.onAuthStateChanged(authorize, userInfo => {
     if (!!userInfo) {
-
         //check user role
         onValue(ref(db, "servers/" + serverName + "/users/" + authorize.currentUser.uid),
             ss => {
+            if (ss.val() != null) {
                 const {admin, displayName, online, role, photoURL} = ss.val();
                 console.log("checking admin");
                 console.log(admin);
@@ -363,6 +371,11 @@ fbauth.onAuthStateChanged(authorize, userInfo => {
 
                 init(userInfo, channelName, authorize);
                 user = userInfo;
+            }
+            else {
+                console.log("ss is null dude");
+            }
+
             });
 
 
@@ -377,8 +390,9 @@ function tearDown() {
     $("#current-user-info").empty();
     $("#users-list").empty();
     $("#channelName").text("");
+    $("#serverName").text("");
     $("#messageList").empty();
-    $("#channelsGoHere").innerHTML = '';
+    $("#channelsGoHere").empty();
 }
 
 function init(user, channelName, authorize) {
@@ -399,7 +413,8 @@ function init(user, channelName, authorize) {
 
         });
     }
-    $("#channelName").text("# " + channelName)
+    $("#channelName").text("#" + channelName);
+    $("#serverName").text("server name: " + serverName);
 
     // add event listener for channels list
     onChildAdded(ref(db, "servers/" + serverName + "/channels/"), channel => addChannel(channel));
@@ -462,40 +477,53 @@ function init(user, channelName, authorize) {
                 <form action="" id="newServerForm">
                   <input id="newServerName" style="font-size: 10pt;" 
                         type="text" placeholder="Enter new server name">
+                  <input type="submit">
+                  <button type="button" id="serverCancelButton">Cancel</button>
                 </form>
             `);
-        $(document).on("keyup", e => {
+        $("#serverCancelButton").click(function() {
+            $("#newServerForm").remove();
+        });
+        $("#newServerForm").submit(e => {
             e.preventDefault();
             console.log("here");
             const addServerBoxRef = $("#newServerName");
-            if (e.key === "Enter") {
-                serverName = addServerBoxRef.val();
-                console.log("new server name");
-                console.log(serverName);
-                $("#newServerForm").remove();
+            let newServerName = addServerBoxRef.val();
+            console.log("new server name");
+            console.log(newServerName);
+            $("#newServerForm").remove();
 
-                let message = {
-                    "history" : { },
-                    "msg" : `Welcome to the #general channel!`,
-                    "ownerID" : "new-channel-bot",
-                    "reactions" : "",
-                    "time" : Date.now(),
-                    "userDisplay" : "new-channel-bot",
-                    "userPhotoURL": "https://gravatar.com/avatar/e6be0c37c31d874bdf1ed8496ec1f8d9?s=400&d=robohash&r=x",
-                    "edited": "false"
-                };
+            let message = {
+                "history" : { },
+                "msg" : `Welcome to the #general channel!`,
+                "ownerID" : "new-channel-bot",
+                "reactions" : "",
+                "time" : Date.now(),
+                "userDisplay" : "new-channel-bot",
+                "userPhotoURL": "https://gravatar.com/avatar/e6be0c37c31d874bdf1ed8496ec1f8d9?s=400&d=robohash&r=x",
+                "edited": "false"
+            };
 
-                const newChannelRef = push(ref(db, "servers/" + serverName + "/channels/general"));
-                set(newChannelRef, message);
-                //tearDown();
-                //init(user, newChannelRef, authorize);
+            const newChannelRef = push(ref(db, "servers/" + newServerName + "/channels/general"));
+            set(newChannelRef, message);
 
-            }
-            if (e.key === "Escape") {
-                $("#newServerForm").remove();
-            }
+            // push new user, if you made a new server, you are admin
+            let userJSON = {
+                "admin": true,
+                "displayName": user.displayName,
+                "online" : true,
+                "role" : "",
+                "photoURL" : user.photoURL
+            };
+
+            const newUsersRef = push(ref(db, "servers/" + newServerName + "/users"));
+            set(newUsersRef, userJSON).then(function () {
+                serverName = newServerName;
+                channelName = "general";
+                tearDown();
+                init(user, channelName, authorize);
+            });
         })
-        $(document).on("keyup", null);
     })
 
     $("#addChannelButton").on("click", e => {
@@ -505,41 +533,40 @@ function init(user, channelName, authorize) {
                 <form action="" id="newChannelForm">
                   <input id="newChannelName" style="font-size: 10pt;" 
                         type="text" placeholder="Enter new channel name">
+                  <input type="submit">
+                  <button type="button" id="channelCancelButton">Cancel</button>
                 </form>
             `);
-        $(document).on("keyup", e => {
+        $("#channelCancelButton").click(function() {
+            $("#newChannelForm").remove();
+        });
+        $("#newChannelForm").submit(e => {
             e.preventDefault();
-            const currentChannelsPath = "/servers/" + serverName + "/channels/";
             const addChannelBoxRef = $("#newChannelName");
-            if (e.key === "Enter") {
-                const newChannelName = addChannelBoxRef.val();
-                $("#newChannelForm").remove();
+            let newChannelName = addChannelBoxRef.val();
+            $("#newChannelForm").remove();
 
-                let message = {
-                    "history" : { },
-                    "msg" : `Welcome to the #${newChannelName} channel!`,
-                    "ownerID" : "new-channel-bot",
-                    "reactions" : "",
-                    "time" : Date.now(),
-                    "userDisplay" : "new-channel-bot",
-                    "userPhotoURL": "https://gravatar.com/avatar/e6be0c37c31d874bdf1ed8496ec1f8d9?s=400&d=robohash&r=x",
-                    "edited": "false"
-                };
-                console.log("servers/" + serverName + "/channels")
+            let message = {
+                "history" : { },
+                "msg" : `Welcome to the ${newChannelName} channel!`,
+                "ownerID" : "new-channel-bot",
+                "reactions" : "",
+                "time" : Date.now(),
+                "userDisplay" : "new-channel-bot",
+                "userPhotoURL": "https://gravatar.com/avatar/e6be0c37c31d874bdf1ed8496ec1f8d9?s=400&d=robohash&r=x",
+                "edited": "false"
+            };
+            console.log("servers/" + serverName + "/channels")
 
-                const newChannelRef = push(ref(db, "servers/" + serverName + "/channels/" + newChannelName));
-                set(newChannelRef, message);
+            const newChannelRef = push(ref(db, "servers/" + serverName + "/channels/" + newChannelName));
+            set(newChannelRef, message).then(function(){
+                console.log("then!");
                 channelName = newChannelName;
                 tearDown();
-                init(user, newChannelName, authorize);
+                init(user, channelName, authorize);
+            });
 
-            }
-            if (e.key === "Escape") {
-                console.log("hit esc key...");
-                $("#newChannelForm").remove()
-            }
         })
-        $(document).on("keyup", null);
     })
 }
 
