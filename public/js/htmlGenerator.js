@@ -1,8 +1,8 @@
 export function createChannelHTML(channelName) {
     return `
         <div class="channel-container">
-            <p class="channel-name" id="${channelName}">
-               <a href="#" style="text-decoration: none;"># ${channelName}</a>
+            <p class="channel-name" id="${sanitize(channelName)}">
+               <a href="#" style="text-decoration: none;"># ${sanitize(channelName)}</a>
             </p>
         </div>
     `;
@@ -11,8 +11,8 @@ export function createChannelHTML(channelName) {
 export function createServerHTML(serverName) {
     return `
         <div class="channel-container">
-            <p class="channel-name" id="${serverName}">
-               <a href="#" style="text-decoration: none;">${serverName}</a>
+            <p class="channel-name" id="${sanitize(serverName)}">
+               <a href="#" style="text-decoration: none;">${sanitize(serverName)}</a>
             </p>
         </div>
     `;
@@ -21,7 +21,7 @@ export function createServerHTML(serverName) {
 export function createOtherUserHTML(displayName, photoURL, online) {
     const isOnlineCircle = !!online ? "text-success" : "text-fail";
     return `
-        <div class="user-container" id="${displayName}">
+        <div class="user-container" id="${sanitize(displayName)}">
             <img class="user-img" style="height: 20px; width: 20px;"
                 src="${photoURL}" onerror="this.src='https://www.gravatar.com/avatar/?d=retro'"
                 alt="not found">
@@ -33,7 +33,7 @@ export function createOtherUserHTML(displayName, photoURL, online) {
 
 export function createCurrentUserHTML(user) {
     return `
-        <div class="current-user-container" id="current-${user.displayName}">
+        <div class="current-user-container" id="current-${sanitize(user.displayName)}">
             <img class="user-img" src="${user.photoURL}" onerror="this.src='https://www.gravatar.com/avatar/?d=retro'" alt="not found">
             ${user.displayName}
             <div class="dropup">
@@ -58,7 +58,7 @@ export function createMessageHTML(avatarSrc, text, name, timestamp) {
                 <div class="flr">
                     <div class="messages">
                         <p class="msg" >
-                            ${text}
+                            ${sanitize(text)}
                         </p>
                     </div>
                     <span class="timestamp">
@@ -86,7 +86,7 @@ export function createMessageHTMLMyMessage(avatarSrc, text, name,
                 <div class="flr">
                     <div class="messages" id="${msgID}_messages">
                         <p class="msg" id="${msgID}_message_text">
-                            ${text}
+                            ${sanitize(text)}
                         </p>
                     </div>
                     <span class="timestamp">
@@ -118,7 +118,7 @@ export function createMessageHTMLAdminMessage(avatarSrc, text, name,
                 <div class="flr">
                     <div class="messages" id="${msgID}_messages">
                         <p class="msg" id="${msgID}_message_text">
-                            ${text}
+                            ${sanitize(text)}
                         </p>
                     </div>
                     <span class="timestamp">
@@ -143,10 +143,25 @@ export function createEditBoxHTML(msgID, existingText) {
     return `
     <input id="${msgID}_editBox" type="text" 
     class="form-control" autocomplete="off"
-    value="${existingText}"
+    value="${sanitize(existingText)}"
     >
     </div>
     
     
     `;
+}
+
+// stolen from https://stackoverflow.com/a/48226843/13160102
+function sanitize(string) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#x27;',
+        "/": '&#x2F;',
+        "`": '&grave;',
+    };
+    const reg = /[&<>"'/`]/ig;
+    return string.replace(reg, (match)=>(map[match]));
 }
