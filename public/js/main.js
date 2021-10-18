@@ -207,7 +207,7 @@ function addServer(server) {
 function addUser(data) {
     const {admin, displayName, online, role, photoURL} = data.val();
 
-    const userList = document.getElementById("users-list");
+    const userList = document.getElementById("usersGoHere");
     if (!$("#" + displayName).length) {
         userList.insertAdjacentHTML('beforeend',
             htmlGenerator.createOtherUserHTML(displayName, photoURL, online));
@@ -332,16 +332,15 @@ function register(register_email, register_password, retype_password, displayNam
                     let JSONString = JSON.stringify({
                         "displayName" : "",
                         "role" : "",
-                        "admin" : "false",
+                        "admin" : false,
                         "online" : true,
                         "photoURL" : "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
                     });
                     let newUserJSON = JSON.parse(JSONString);
                     newUserJSON.displayName = displayName;
-                    console.log("displayName");
-                    console.log(displayName);
                     isAdmin = false;
-                    set(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid), newUserJSON);
+                    set(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid),
+                        newUserJSON);
 
                 }
             })
@@ -388,7 +387,7 @@ function tearDown() {
     $("#auth-container").removeClass("d-none");
     $("#chat").addClass("d-none");
     $("#current-user-info").empty();
-    $("#users-list").empty();
+    $("#usersGoHere").empty();
     $("#channelName").text("");
     $("#serverName").text("");
     $("#messageList").empty();
