@@ -39,12 +39,12 @@ let user;
 function sendMessage(text) {
 
     let message = {
-        "history" : { },
-        "msg" : sanitize(text),
-        "ownerID" : user.uid,
-        "reactions" : "",
-        "time" : Date.now(),
-        "userDisplay" : sanitize(user.displayName),
+        "history": {},
+        "msg": sanitize(text),
+        "ownerID": user.uid,
+        "reactions": "",
+        "time": Date.now(),
+        "userDisplay": sanitize(user.displayName),
         "userPhotoURL": user.photoURL,
         "edited": "false"
     };
@@ -66,7 +66,7 @@ function clearInputBox() {
 
 function addMessage(data) {
     const messageList = document.getElementById("messageList");
-    const { history, msg, ownerID, reactions, time, userDisplay, userPhotoURL, edited } = data.val();
+    const {history, msg, ownerID, reactions, time, userDisplay, userPhotoURL, edited} = data.val();
     const msgID = data.key;
 
     if (ownerID === user.uid) {
@@ -74,7 +74,7 @@ function addMessage(data) {
 
         let timeWithPossibleEdited = timeConverter(time);
         if (edited === 'true') {
-            timeWithPossibleEdited  += " * edited";
+            timeWithPossibleEdited += " * edited";
         }
 
         messageList.insertAdjacentHTML('beforeend',
@@ -85,7 +85,7 @@ function addMessage(data) {
         const messageEditButtonRef = $("#" + msgID + "_edit");
         messageEditButtonRef.on("click", e => {
             e.preventDefault();
-            const existingMessageText =  $("#" + msgID + "_message_text");
+            const existingMessageText = $("#" + msgID + "_message_text");
             $("#" + msgID + "_messages")
                 .append(htmlGenerator.createEditBoxHTML(msgID,
                     sanitize(existingMessageText[0].innerText)));
@@ -103,12 +103,11 @@ function addMessage(data) {
             remove(ref(db, "channels/" + channelName + "/" + msgID));
             $("#" + msgID + "_message").remove();
         });
-    }
-    else if (isAdmin) {
+    } else if (isAdmin) {
         // is admin, add x
         let timeWithPossibleEdited = timeConverter(time);
         if (edited === 'true') {
-            timeWithPossibleEdited  += " * edited";
+            timeWithPossibleEdited += " * edited";
         }
         messageList.insertAdjacentHTML('beforeend',
             htmlGenerator.createMessageHTMLAdminMessage(
@@ -128,12 +127,11 @@ function addMessage(data) {
             }
         });
 
-    }
-    else {
+    } else {
         // normal user and not my message
         let timeWithPossibleEdited = timeConverter(time);
         if (edited === 'true') {
-            timeWithPossibleEdited  += " * edited";
+            timeWithPossibleEdited += " * edited";
         }
         messageList.insertAdjacentHTML('beforeend',
             htmlGenerator.createMessageHTML(userPhotoURL, sanitize(msg), sanitize(userDisplay), timeWithPossibleEdited));
@@ -150,11 +148,11 @@ function editMessage(e, msgID) {
         set(ref(db, currentChannelAndMessagePath + "/edited"), "true");
         set(ref(db, currentChannelAndMessagePath + "/time"), Date.now());
         editBoxRef.hide();
-        $("#"+ msgID + "_message_text").show();
+        $("#" + msgID + "_message_text").show();
     }
     if (e.key === "Escape") {
         editBoxRef.hide();
-        $("#"+ msgID + "_message_text").show();
+        $("#" + msgID + "_message_text").show();
     }
 }
 
@@ -168,6 +166,11 @@ function addChannel(channel) {
         $("#" + channel.key).on("click", ev => {
             ev.preventDefault();
             channelName = sanitize(channel.key);
+            // // set new search params
+            const myParams = new URLSearchParams(window.location.search);
+            myParams.set('server', sanitize(serverName));
+            myParams.set('channel', sanitize(channelName));
+            window.location.search = myParams;
             tearDown();
             init(user, channel.key, authorize);
         });
@@ -185,6 +188,11 @@ function addServer(server) {
         $("#" + server.key).on("click", ev => {
             ev.preventDefault();
             serverName = sanitize(server.key);
+            // set new search params
+            const myParams = new URLSearchParams(window.location.search);
+            myParams.set('server', sanitize(serverName));
+            myParams.set('channel', sanitize(channelName));
+            window.location.search = myParams;
             tearDown();
             channelName = "general";
             init(user, "general", authorize);
@@ -271,7 +279,7 @@ function loginWithGoogle() {
         .catch(error => {
             console.log(error.code);
             console.log(error.message);
-    });
+        });
 }
 
 function handleOAuth(data) {
@@ -281,15 +289,14 @@ function handleOAuth(data) {
             // user exists in db
             set(ref(db, "servers/" + serverName + "/users/"
                 + user.auth.lastNotifiedUid + "/online"), true);
-        }
-        else {
+        } else {
             // user doesn't exist in db
             let JSONString = JSON.stringify({
-                "displayName" : "",
-                "role" : "",
-                "admin" : "false",
-                "online" : true,
-                "photoURL" : "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
+                "displayName": "",
+                "role": "",
+                "admin": "false",
+                "online": true,
+                "photoURL": "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
             });
             let newUserJSON = JSON.parse(JSONString);
             newUserJSON.displayName = sanitize(user.displayName);
@@ -318,11 +325,11 @@ function register(register_email, register_password, retype_password, displayNam
                     console.log(user.auth.lastNotifiedUid);
 
                     let JSONString = JSON.stringify({
-                        "displayName" : "",
-                        "role" : "",
-                        "admin" : false,
-                        "online" : true,
-                        "photoURL" : "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
+                        "displayName": "",
+                        "role": "",
+                        "admin": false,
+                        "online": true,
+                        "photoURL": "//gravatar.com/avatar/56234674574535734573000000000001?d=retro"
                     });
                     let newUserJSON = JSON.parse(JSONString);
                     newUserJSON.displayName = sanitize(displayName);
@@ -337,8 +344,7 @@ function register(register_email, register_password, retype_password, displayNam
                 console.log(error.message);
             });
 
-    }
-    else {
+    } else {
         alert("Passwords do not match!");
         // TODO: clear password inputs?
     }
@@ -350,24 +356,25 @@ fbauth.onAuthStateChanged(authorize, userInfo => {
         //check user role
         onValue(ref(db, "servers/" + serverName + "/users/" + authorize.currentUser.uid),
             ss => {
-            if (ss.val() != null) {
-                const {admin, displayName, online, role, photoURL} = ss.val();
-                console.log("checking admin");
-                console.log(admin);
-                isAdmin = !!admin;
+                if (ss.val() != null) {
+                    const {admin, displayName, online, role, photoURL} = ss.val();
+                    console.log("checking admin");
+                    console.log(admin);
+                    isAdmin = !!admin;
 
-                init(userInfo, channelName, authorize);
-                user = userInfo;
-            }
-            else {
-                console.log("ss is null dude");
-            }
+                    init(userInfo, channelName, authorize);
+                    user = userInfo;
+                } else {
+                    console.log("ss is null dude");
+                }
 
             });
 
 
     } else {
         tearDown();
+        $("#auth-container").removeClass("d-none");
+        $("#chat").addClass("d-none");
     }
 });
 
@@ -383,6 +390,13 @@ function tearDown() {
 }
 
 function init(user, channelName, authorize) {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has("server")) {
+        serverName = sanitize(urlParams.get("server"));
+    }
+    if (urlParams.has("channel")) {
+        channelName = sanitize(urlParams.get("channel"));
+    }
 
     $("#chat").removeClass("d-none");
     $("#auth-container").addClass("d-none");
@@ -393,8 +407,7 @@ function init(user, channelName, authorize) {
 
             if (dropUpContent.hasClass("d-none")) {
                 dropUpContent.removeClass("d-none");
-            }
-            else {
+            } else {
                 dropUpContent.addClass("d-none");
             }
 
@@ -416,15 +429,17 @@ function init(user, channelName, authorize) {
     onChildAdded(ref(db, "servers/" + serverName + "/users/"), data => addUser(data));
 
     // watch for login status
-    onChildChanged(ref(db, "servers/" + serverName + "/users/"),  data => {
+    onChildChanged(ref(db, "servers/" + serverName + "/users/"), data => {
         const {admin, displayName, online, role, photoURL} = data.val();
         $("#" + displayName).remove();
         addUser(data);
     });
 
     onChildChanged(ref(db, "servers/" + serverName + "/channels/" + channelName), data => {
-        const { history, msg, ownerID, reactions,
-            time, userDisplay, userPhotoURL, edited } = data.val();
+        const {
+            history, msg, ownerID, reactions,
+            time, userDisplay, userPhotoURL, edited
+        } = data.val();
 
         $("#" + data.key + "_posttime").html(timeConverter(time) + " * edited");
         $("#" + data.key + "_message_text").html(msg);
@@ -437,13 +452,13 @@ function init(user, channelName, authorize) {
         const uuid = authorize.currentUser.uid;
         set(ref(db, "servers/" + serverName + "/users/" + uuid + "/online"), false)
             .then(fbauth.signOut(authorize)
-                    .then(function() {
-                        console.log("log out successful");
-                    }, function(error) {
-                        console.log(error);
-                    })
+                .then(function () {
+                    console.log("log out successful");
+                }, function (error) {
+                    console.log(error);
+                })
             ).catch(err => {
-                console.log(err);
+            console.log(err);
         });
 
     })
@@ -456,6 +471,9 @@ function init(user, channelName, authorize) {
 
     $("#addServerButton").on("click", e => {
         e.preventDefault();
+        if ($("#newServerForm").length) {
+            return;
+        }
         document.getElementById("newServerFormDiv")
             .insertAdjacentHTML("beforebegin", `
                 <form action="" id="newServerForm">
@@ -465,7 +483,7 @@ function init(user, channelName, authorize) {
                   <button type="button" id="serverCancelButton">Cancel</button>
                 </form>
             `);
-        $("#serverCancelButton").click(function() {
+        $("#serverCancelButton").click(function () {
             $("#newServerForm").remove();
         });
         $("#newServerForm").submit(e => {
@@ -476,13 +494,13 @@ function init(user, channelName, authorize) {
             $("#newServerForm").remove();
 
             let message = {
-                "history" : { },
-                "msg" : `Welcome to the #general channel!`,
-                "ownerID" : "new-channel-bot",
-                "reactions" : "",
-                "time" : Date.now(),
-                "userDisplay" : "new-channel-bot",
-                "userPhotoURL": "https://gravatar.com/avatar/e6be0c37c31d874bdf1ed8496ec1f8d9?s=400&d=robohash&r=x",
+                "history": {},
+                "msg": `Welcome to the #general channel!`,
+                "ownerID": "new-channel-bot",
+                "reactions": "",
+                "time": Date.now(),
+                "userDisplay": "new-channel-bot",
+                "userPhotoURL": "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/2c727e48-595d-4e29-ab6e-eaec806cc004/ddbv3yv-2fc70379-e3b9-45c5-8636-8850a99ba565.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcLzJjNzI3ZTQ4LTU5NWQtNGUyOS1hYjZlLWVhZWM4MDZjYzAwNFwvZGRidjN5di0yZmM3MDM3OS1lM2I5LTQ1YzUtODYzNi04ODUwYTk5YmE1NjUucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.Mtw8z49UBVUyKqKXfZv7S5E-zY2Kor9kyIPRNDLhYsA",
                 "edited": "false"
             };
 
@@ -493,23 +511,32 @@ function init(user, channelName, authorize) {
             let userJSON = {
                 "admin": true,
                 "displayName": user.displayName,
-                "online" : true,
-                "role" : "",
-                "photoURL" : user.photoURL
+                "online": true,
+                "role": "",
+                "photoURL": user.photoURL
             };
 
             const newUsersRef = push(ref(db, "servers/" + newServerName + "/users"));
             set(newUsersRef, userJSON).then(function () {
                 serverName = newServerName;
                 channelName = "general";
+                // set new search params
+                const myParams = new URLSearchParams(window.location.search);
+                myParams.set('server', sanitize(serverName));
+                myParams.set('channel', sanitize(channelName));
+                window.location.search = myParams;
                 tearDown();
                 init(user, channelName, authorize);
             });
+            $("#newServerForm").remove();
         })
     })
 
     $("#addChannelButton").on("click", e => {
         e.preventDefault();
+        if ($("#newChannelForm").length) {
+            return;
+        }
         document.getElementById("newChannelFormDiv")
             .insertAdjacentHTML("beforebegin", `
                 <form action="" id="newChannelForm">
@@ -519,7 +546,7 @@ function init(user, channelName, authorize) {
                   <button type="button" id="channelCancelButton">Cancel</button>
                 </form>
             `);
-        $("#channelCancelButton").click(function() {
+        $("#channelCancelButton").click(function () {
             $("#newChannelForm").remove();
         });
         $("#newChannelForm").submit(e => {
@@ -529,27 +556,36 @@ function init(user, channelName, authorize) {
             $("#newChannelForm").remove();
 
             let message = {
-                "history" : { },
-                "msg" : `Welcome to the ${newChannelName} channel!`,
-                "ownerID" : "new-channel-bot",
-                "reactions" : "",
-                "time" : Date.now(),
-                "userDisplay" : "new-channel-bot",
-                "userPhotoURL": "https://gravatar.com/avatar/e6be0c37c31d874bdf1ed8496ec1f8d9?s=400&d=robohash&r=x",
+                "history": {},
+                "msg": `Welcome to the ${newChannelName} channel!`,
+                "ownerID": "new-channel-bot",
+                "reactions": "",
+                "time": Date.now(),
+                "userDisplay": "new-channel-bot",
+                "userPhotoURL": "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/2c727e48-595d-4e29-ab6e-eaec806cc004/ddbv3yv-2fc70379-e3b9-45c5-8636-8850a99ba565.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcLzJjNzI3ZTQ4LTU5NWQtNGUyOS1hYjZlLWVhZWM4MDZjYzAwNFwvZGRidjN5di0yZmM3MDM3OS1lM2I5LTQ1YzUtODYzNi04ODUwYTk5YmE1NjUucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.Mtw8z49UBVUyKqKXfZv7S5E-zY2Kor9kyIPRNDLhYsA",
                 "edited": "false"
             };
             console.log("servers/" + serverName + "/channels")
 
             const newChannelRef = push(ref(db, "servers/" + serverName + "/channels/" + newChannelName));
-            set(newChannelRef, message).then(function(){
+            set(newChannelRef, message).then(function () {
                 console.log("then!");
                 channelName = newChannelName;
+                // set new search params
+                const myParams = new URLSearchParams(window.location.search);
+                myParams.set('server', sanitize(serverName));
+                myParams.set('channel', sanitize(channelName));
+                window.location.search = myParams;
                 tearDown();
                 init(user, channelName, authorize);
             });
-
         })
     })
+    // set new search params, this is problematic here
+    // const myParams = new URLSearchParams(window.location.search);
+    // myParams.set('server', sanitize(serverName));
+    // myParams.set('channel', sanitize(channelName));
+    // window.location.search = myParams;
 }
 
 // stolen from https://stackoverflow.com/questions/847185/convert-a-unix-timestamp-to-time-in-javascript
@@ -578,5 +614,5 @@ function sanitize(string) {
         "`": '&grave;',
     };
     const reg = /[&<>"'/`]/ig;
-    return string.replace(reg, (match)=>(map[match]));
+    return string.replace(reg, (match) => (map[match]));
 }
