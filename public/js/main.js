@@ -30,9 +30,9 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase();
 const authorize = fbauth.getAuth(app);
 console.log(authorize);
-let channelName = "general";
 let isAdmin = false;
-let serverName = "main";
+const urlParams = new URLSearchParams(window.location.search);
+
 
 let user;
 
@@ -48,7 +48,7 @@ function sendMessage(text) {
         "userPhotoURL": user.photoURL,
         "edited": "false"
     };
-    const newMessageRef = push(ref(db, "servers/" + serverName + "/channels/" + channelName));
+    const newMessageRef = push(ref(db, "servers/" + urlParams.get('server') + "/channels/" + urlParams.get("channel")));
     set(newMessageRef, message);
     clearInputBox();
 }
@@ -100,8 +100,11 @@ function addMessage(data) {
         deleteButtonRef.on("click", e => {
             e.preventDefault();
             alert("Are you sure you want to delete this message?");
-            remove(ref(db, "channels/" + channelName + "/" + msgID));
-            $("#" + msgID + "_message").remove();
+            remove(ref(db, "servers/" + urlParams.get('server') + "/channels/" + urlParams.get('channel') + "/" + msgID))
+                .then($("#" + msgID + "_message").remove())
+                .catch(e => {
+                    console.log(e);
+                });
         });
     } else if (isAdmin) {
         // is admin, add x
@@ -119,7 +122,7 @@ function addMessage(data) {
             if (isAdmin) {
                 e.preventDefault();
                 alert("Are you sure you want to delete this message?");
-                remove(ref(db, "servers/" + serverName + "/channels/" + channelName + "/" + msgID))
+                remove(ref(db, "servers/" + urlParams.get('server') + "/channels/" + urlParams.get('channel') + "/" + msgID))
                     .then($("#" + msgID + "_message").remove())
                     .catch(e => {
                         console.log(e);
@@ -141,7 +144,8 @@ function addMessage(data) {
 }
 
 function editMessage(e, msgID) {
-    const currentChannelAndMessagePath = "/servers/" + serverName + "/channels/" + channelName + "/" + msgID;
+    const currentChannelAndMessagePath = "/servers/" + urlParams.get('server') + "/channels/"
+        + urlParams.get('channel') + "/" + msgID;
     const editBoxRef = $("#" + msgID + "_editBox");
     if (e.key === "Enter") {
         set(ref(db, currentChannelAndMessagePath + "/msg"), sanitize(editBoxRef.val()));
@@ -165,11 +169,9 @@ function addChannel(channel) {
         //set up link for indv channel
         $("#" + channel.key).on("click", ev => {
             ev.preventDefault();
-            channelName = sanitize(channel.key);
             // // set new search params
             const myParams = new URLSearchParams(window.location.search);
-            myParams.set('server', sanitize(serverName));
-            myParams.set('channel', sanitize(channelName));
+            myParams.set('channel', sanitize(channel.key));
             window.location.search = myParams;
             tearDown();
             init(user, channel.key, authorize);
@@ -187,15 +189,13 @@ function addServer(server) {
         //set up link for indv server
         $("#" + server.key).on("click", ev => {
             ev.preventDefault();
-            serverName = sanitize(server.key);
             // set new search params
             const myParams = new URLSearchParams(window.location.search);
-            myParams.set('server', sanitize(serverName));
-            myParams.set('channel', sanitize(channelName));
+            myParams.set('server', sanitize(server.key));
+            myParams.set('channel', "general");
             window.location.search = myParams;
             tearDown();
-            channelName = "general";
-            init(user, "general", authorize);
+            init();
         });
     }
 }
@@ -284,10 +284,10 @@ function loginWithGoogle() {
 
 function handleOAuth(data) {
     user = data.user;
-    onValue(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid), snapshot => {
+    onValue(ref(db, "servers/" + urlParams.get('server') + "/users/" + user.auth.lastNotifiedUid), snapshot => {
         if (snapshot.exists()) {
             // user exists in db
-            set(ref(db, "servers/" + serverName + "/users/"
+            set(ref(db, "servers/" + urlParams.get('server') + "/users/"
                 + user.auth.lastNotifiedUid + "/online"), true);
         } else {
             // user doesn't exist in db
@@ -301,7 +301,7 @@ function handleOAuth(data) {
             let newUserJSON = JSON.parse(JSONString);
             newUserJSON.displayName = sanitize(user.displayName);
             newUserJSON.photoURL = user.photoURL;
-            set(ref(db, "servers/" + serverName + "/users/"
+            set(ref(db, "servers/" + urlParams.get('server') + "/users/"
                 + user.auth.lastNotifiedUid), newUserJSON);
         }
     });
@@ -334,7 +334,7 @@ function register(register_email, register_password, retype_password, displayNam
                     let newUserJSON = JSON.parse(JSONString);
                     newUserJSON.displayName = sanitize(displayName);
                     isAdmin = false;
-                    set(ref(db, "servers/" + serverName + "/users/" + user.auth.lastNotifiedUid),
+                    set(ref(db, "servers/" + urlParams.get('server') + "/users/" + user.auth.lastNotifiedUid),
                         newUserJSON);
 
                 }
@@ -354,16 +354,15 @@ function register(register_email, register_password, retype_password, displayNam
 fbauth.onAuthStateChanged(authorize, userInfo => {
     if (!!userInfo) {
         //check user role
-        onValue(ref(db, "servers/" + serverName + "/users/" + authorize.currentUser.uid),
+        onValue(ref(db, "servers/" + urlParams.get('server') + "/users/" + authorize.currentUser.uid),
             ss => {
                 if (ss.val() != null) {
                     const {admin, displayName, online, role, photoURL} = ss.val();
                     console.log("checking admin");
                     console.log(admin);
                     isAdmin = !!admin;
-
-                    init(userInfo, channelName, authorize);
                     user = userInfo;
+                    init();
                 } else {
                     console.log("ss is null dude");
                 }
@@ -389,13 +388,12 @@ function tearDown() {
     $("#channelsGoHere").empty();
 }
 
-function init(user, channelName, authorize) {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has("server")) {
-        serverName = sanitize(urlParams.get("server"));
+function init() {
+    if (!urlParams.has("server")) {
+        urlParams.set('server', "main");
     }
-    if (urlParams.has("channel")) {
-        channelName = sanitize(urlParams.get("channel"));
+    if (!urlParams.has("channel")) {
+        urlParams.set('channel', "general");
     }
 
     $("#chat").removeClass("d-none");
@@ -413,29 +411,29 @@ function init(user, channelName, authorize) {
 
         });
     }
-    $("#channelName").text("#" + channelName);
-    $("#serverName").text("server name: " + serverName);
+    $("#channelName").text("#" + urlParams.get('channel'));
+    $("#serverName").text("server name: " + urlParams.get('server'));
 
     // add event listener for channels list
-    onChildAdded(ref(db, "servers/" + serverName + "/channels/"), channel => addChannel(channel));
+    onChildAdded(ref(db, "servers/" + urlParams.get('server') + "/channels/"), channel => addChannel(channel));
 
     // add event listener for servers list
     onChildAdded(ref(db, "servers/"), server => addServer(server));
 
     // add event listener for messages in current channel
-    onChildAdded(ref(db, "servers/" + serverName + "/channels/" + channelName), data => addMessage(data));
+    onChildAdded(ref(db, "servers/" + urlParams.get('server') + "/channels/" + urlParams.get('channel')), data => addMessage(data));
 
     // add event listener for users in current server
-    onChildAdded(ref(db, "servers/" + serverName + "/users/"), data => addUser(data));
+    onChildAdded(ref(db, "servers/" + urlParams.get('server') + "/users/"), data => addUser(data));
 
     // watch for login status
-    onChildChanged(ref(db, "servers/" + serverName + "/users/"), data => {
+    onChildChanged(ref(db, "servers/" + urlParams.get('server') + "/users/"), data => {
         const {admin, displayName, online, role, photoURL} = data.val();
         $("#" + displayName).remove();
         addUser(data);
     });
 
-    onChildChanged(ref(db, "servers/" + serverName + "/channels/" + channelName), data => {
+    onChildChanged(ref(db, "servers/" + urlParams.get('server') + "/channels/" + urlParams.get('channel')), data => {
         const {
             history, msg, ownerID, reactions,
             time, userDisplay, userPhotoURL, edited
@@ -450,7 +448,7 @@ function init(user, channelName, authorize) {
         // set user to offline
         e.preventDefault();
         const uuid = authorize.currentUser.uid;
-        set(ref(db, "servers/" + serverName + "/users/" + uuid + "/online"), false)
+        set(ref(db, "servers/" + urlParams.get('server') + "/users/" + uuid + "/online"), false)
             .then(fbauth.signOut(authorize)
                 .then(function () {
                     console.log("log out successful");
@@ -518,15 +516,13 @@ function init(user, channelName, authorize) {
 
             const newUsersRef = push(ref(db, "servers/" + newServerName + "/users"));
             set(newUsersRef, userJSON).then(function () {
-                serverName = newServerName;
-                channelName = "general";
                 // set new search params
                 const myParams = new URLSearchParams(window.location.search);
-                myParams.set('server', sanitize(serverName));
-                myParams.set('channel', sanitize(channelName));
+                myParams.set('server', sanitize(newServerName));
+                myParams.set('channel',"general");
                 window.location.search = myParams;
                 tearDown();
-                init(user, channelName, authorize);
+                init();
             });
             $("#newServerForm").remove();
         })
@@ -565,19 +561,17 @@ function init(user, channelName, authorize) {
                 "userPhotoURL": "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/2c727e48-595d-4e29-ab6e-eaec806cc004/ddbv3yv-2fc70379-e3b9-45c5-8636-8850a99ba565.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcLzJjNzI3ZTQ4LTU5NWQtNGUyOS1hYjZlLWVhZWM4MDZjYzAwNFwvZGRidjN5di0yZmM3MDM3OS1lM2I5LTQ1YzUtODYzNi04ODUwYTk5YmE1NjUucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.Mtw8z49UBVUyKqKXfZv7S5E-zY2Kor9kyIPRNDLhYsA",
                 "edited": "false"
             };
-            console.log("servers/" + serverName + "/channels")
+            console.log("servers/" + urlParams.get('server') + "/channels")
 
-            const newChannelRef = push(ref(db, "servers/" + serverName + "/channels/" + newChannelName));
+            const newChannelRef = push(ref(db, "servers/" + urlParams.get('server') + "/channels/" + newChannelName));
             set(newChannelRef, message).then(function () {
                 console.log("then!");
-                channelName = newChannelName;
                 // set new search params
                 const myParams = new URLSearchParams(window.location.search);
-                myParams.set('server', sanitize(serverName));
-                myParams.set('channel', sanitize(channelName));
+                myParams.set('channel', sanitize(newChannelName));
                 window.location.search = myParams;
                 tearDown();
-                init(user, channelName, authorize);
+                init();
             });
         })
     })
