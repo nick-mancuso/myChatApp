@@ -358,18 +358,14 @@ fbauth.onAuthStateChanged(authorize, userInfo => {
             ss => {
                 if (ss.val() != null) {
                     const {admin, displayName, online, role, photoURL} = ss.val();
-                    console.log("checking admin");
-                    console.log(admin);
                     isAdmin = !!admin;
                     user = userInfo;
                     init();
                 } else {
                     console.log("ss is null dude");
+                    init();
                 }
-
             });
-
-
     } else {
         tearDown();
         $("#auth-container").removeClass("d-none");
@@ -389,12 +385,39 @@ function tearDown() {
 }
 
 function init() {
+    // no params
     if (!urlParams.has("server")) {
         urlParams.set('server', "main");
     }
     if (!urlParams.has("channel")) {
         urlParams.set('channel', "general");
     }
+
+    // bad params
+    onValue(ref(db, "servers/" + urlParams.get('server')),
+        ss => {
+            if (ss.exists()) {
+                // good server, check channel
+                onValue(ref(db, "servers/" + urlParams.get('server') + "/channels/" + urlParams.get('channel')),
+                    ss => {
+                        if (!ss.exists()) {
+                            let badChannel = urlParams.get('channel');
+                            urlParams.set('channel', "general");
+                            window.location.search = urlParams;
+                            alert("channel " + badChannel + " does not exist!");
+                        }
+                    });
+            } else {
+                // bad server
+                let badServer = urlParams.get('server');
+                urlParams.set('server', "main");
+                urlParams.set('channel', "general");
+                window.location.search = urlParams;
+                alert("server " + badServer + " does not exist!");
+
+            }
+        });
+
 
     $("#chat").removeClass("d-none");
     $("#auth-container").addClass("d-none");
@@ -519,7 +542,7 @@ function init() {
                 // set new search params
                 const myParams = new URLSearchParams(window.location.search);
                 myParams.set('server', sanitize(newServerName));
-                myParams.set('channel',"general");
+                myParams.set('channel', "general");
                 window.location.search = myParams;
                 tearDown();
                 init();
