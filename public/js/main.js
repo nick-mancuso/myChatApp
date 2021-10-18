@@ -352,7 +352,6 @@ function register(register_email, register_password, retype_password, displayNam
 
 fbauth.onAuthStateChanged(authorize, userInfo => {
     if (!!userInfo) {
-        console.log(JSON.stringify(userInfo))
 
         //check user role
         onValue(ref(db, "servers/" + serverName + "/users/" + authorize.currentUser.uid),
@@ -467,18 +466,36 @@ function init(user, channelName, authorize) {
             `);
         $(document).on("keyup", e => {
             e.preventDefault();
-            const currentServerPath = "/servers/" + serverName;
+            console.log("here");
             const addServerBoxRef = $("#newServerName");
             if (e.key === "Enter") {
-                // set(ref(db, currentChannelAndMessagePath + "/msg"), editBoxRef.val());
-                console.log(addServerBoxRef.val());
+                serverName = addServerBoxRef.val();
+                console.log("new server name");
+                console.log(serverName);
                 $("#newServerForm").remove();
+
+                let message = {
+                    "history" : { },
+                    "msg" : `Welcome to the #general channel!`,
+                    "ownerID" : "new-channel-bot",
+                    "reactions" : "",
+                    "time" : Date.now(),
+                    "userDisplay" : "new-channel-bot",
+                    "userPhotoURL": "https://gravatar.com/avatar/e6be0c37c31d874bdf1ed8496ec1f8d9?s=400&d=robohash&r=x",
+                    "edited": "false"
+                };
+
+                const newChannelRef = push(ref(db, "servers/" + serverName + "/channels/general"));
+                set(newChannelRef, message);
+                //tearDown();
+                //init(user, newChannelRef, authorize);
+
             }
             if (e.key === "Escape") {
-                //editBoxRef.remove();
                 $("#newServerForm").remove();
             }
         })
+        $(document).on("keyup", null);
     })
 
     $("#addChannelButton").on("click", e => {
@@ -522,6 +539,7 @@ function init(user, channelName, authorize) {
                 $("#newChannelForm").remove()
             }
         })
+        $(document).on("keyup", null);
     })
 }
 
