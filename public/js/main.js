@@ -114,7 +114,8 @@ function addMessage(data) {
         }
         messageList.insertAdjacentHTML('beforeend',
             htmlGenerator.createMessageHTMLAdminMessage(
-                userPhotoURL, sanitize(msg), sanitize(userDisplay), timeWithPossibleEdited, msgID
+                userPhotoURL, sanitize(msg), sanitize(userDisplay),
+                timeWithPossibleEdited, msgID
             ));
 
         const adminDeleteButtonRef = $("#" + msgID + "_delete");
@@ -122,7 +123,8 @@ function addMessage(data) {
             if (isAdmin) {
                 e.preventDefault();
                 alert("Are you sure you want to delete this message?");
-                remove(ref(db, "servers/" + urlParams.get('server') + "/channels/" + urlParams.get('channel') + "/" + msgID))
+                remove(ref(db, "servers/" + urlParams.get('server') + "/channels/"
+                    + urlParams.get('channel') + "/" + msgID))
                     .then($("#" + msgID + "_message").remove())
                     .catch(e => {
                         console.log(e);
@@ -393,7 +395,7 @@ function init() {
         urlParams.set('channel', "general");
     }
 
-    // bad params
+    // check for bad params
     onValue(ref(db, "servers/" + urlParams.get('server')),
         ss => {
             if (ss.exists()) {
@@ -417,7 +419,6 @@ function init() {
 
             }
         });
-
 
     $("#chat").removeClass("d-none");
     $("#auth-container").addClass("d-none");
@@ -512,42 +513,51 @@ function init() {
             console.log("here");
             const addServerBoxRef = $("#newServerName");
             let newServerName = sanitize(addServerBoxRef.val());
-            $("#newServerForm").remove();
+            // check for bad params
+            onValue(ref(db, "servers/" + newServerName),
+                ss => {
+                    if (ss.exists()) {
+                        //server exists
+                        $("#newServerForm").remove();
+                        alert("A server named '" + newServerName + "' already exists!");
+                    } else {
+                        // new server
+                        $("#newServerForm").remove();
+                        let message = {
+                            "history": {},
+                            "msg": `Welcome to the #general channel!`,
+                            "ownerID": "new-channel-bot",
+                            "reactions": "",
+                            "time": Date.now(),
+                            "userDisplay": "new-channel-bot",
+                            "userPhotoURL": "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/2c727e48-595d-4e29-ab6e-eaec806cc004/ddbv3yv-2fc70379-e3b9-45c5-8636-8850a99ba565.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcLzJjNzI3ZTQ4LTU5NWQtNGUyOS1hYjZlLWVhZWM4MDZjYzAwNFwvZGRidjN5di0yZmM3MDM3OS1lM2I5LTQ1YzUtODYzNi04ODUwYTk5YmE1NjUucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.Mtw8z49UBVUyKqKXfZv7S5E-zY2Kor9kyIPRNDLhYsA",
+                            "edited": "false"
+                        };
+                        const newChannelRef = push(ref(db, "servers/" + newServerName + "/channels/general"));
+                        set(newChannelRef, message);
 
-            let message = {
-                "history": {},
-                "msg": `Welcome to the #general channel!`,
-                "ownerID": "new-channel-bot",
-                "reactions": "",
-                "time": Date.now(),
-                "userDisplay": "new-channel-bot",
-                "userPhotoURL": "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/2c727e48-595d-4e29-ab6e-eaec806cc004/ddbv3yv-2fc70379-e3b9-45c5-8636-8850a99ba565.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcLzJjNzI3ZTQ4LTU5NWQtNGUyOS1hYjZlLWVhZWM4MDZjYzAwNFwvZGRidjN5di0yZmM3MDM3OS1lM2I5LTQ1YzUtODYzNi04ODUwYTk5YmE1NjUucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.Mtw8z49UBVUyKqKXfZv7S5E-zY2Kor9kyIPRNDLhYsA",
-                "edited": "false"
-            };
+                        // push new user, if you made a new server, you are admin
+                        let userJSON = {
+                            "admin": true,
+                            "displayName": user.displayName,
+                            "online": true,
+                            "role": "",
+                            "photoURL": user.photoURL
+                        };
 
-            const newChannelRef = push(ref(db, "servers/" + newServerName + "/channels/general"));
-            set(newChannelRef, message);
-
-            // push new user, if you made a new server, you are admin
-            let userJSON = {
-                "admin": true,
-                "displayName": user.displayName,
-                "online": true,
-                "role": "",
-                "photoURL": user.photoURL
-            };
-
-            const newUsersRef = push(ref(db, "servers/" + newServerName + "/users"));
-            set(newUsersRef, userJSON).then(function () {
-                // set new search params
-                const myParams = new URLSearchParams(window.location.search);
-                myParams.set('server', sanitize(newServerName));
-                myParams.set('channel', "general");
-                window.location.search = myParams;
-                tearDown();
-                init();
-            });
-            $("#newServerForm").remove();
+                        const newUsersRef = push(ref(db, "servers/" + newServerName + "/users"));
+                        set(newUsersRef, userJSON).then(function () {
+                            // set new search params
+                            const myParams = new URLSearchParams(window.location.search);
+                            myParams.set('server', sanitize(newServerName));
+                            myParams.set('channel', "general");
+                            window.location.search = myParams;
+                            tearDown();
+                            init();
+                        });
+                        $("#newServerForm").remove();
+                    }
+                });
         })
     })
 
@@ -572,43 +582,49 @@ function init() {
             e.preventDefault();
             const addChannelBoxRef = $("#newChannelName");
             let newChannelName = sanitize(addChannelBoxRef.val());
-            $("#newChannelForm").remove();
+            // good server, check channel
+            onValue(ref(db, "servers/" + urlParams.get('server') + "/channels/" + urlParams.get('channel')),
+                ss => {
+                    if (ss.exists()) {
+                        // channel exists already
+                        $("#newChannelForm").remove();
+                        alert("A channel named '" + newChannelName + "' exists already!");
+                    } else {
+                        // make new channel
+                        $("#newChannelForm").remove();
 
-            let message = {
-                "history": {},
-                "msg": `Welcome to the ${newChannelName} channel!`,
-                "ownerID": "new-channel-bot",
-                "reactions": "",
-                "time": Date.now(),
-                "userDisplay": "new-channel-bot",
-                "userPhotoURL": "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/2c727e48-595d-4e29-ab6e-eaec806cc004/ddbv3yv-2fc70379-e3b9-45c5-8636-8850a99ba565.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcLzJjNzI3ZTQ4LTU5NWQtNGUyOS1hYjZlLWVhZWM4MDZjYzAwNFwvZGRidjN5di0yZmM3MDM3OS1lM2I5LTQ1YzUtODYzNi04ODUwYTk5YmE1NjUucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.Mtw8z49UBVUyKqKXfZv7S5E-zY2Kor9kyIPRNDLhYsA",
-                "edited": "false"
-            };
-            console.log("servers/" + urlParams.get('server') + "/channels")
+                        let message = {
+                            "history": {},
+                            "msg": `Welcome to the ${newChannelName} channel!`,
+                            "ownerID": "new-channel-bot",
+                            "reactions": "",
+                            "time": Date.now(),
+                            "userDisplay": "new-channel-bot",
+                            "userPhotoURL": "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/2c727e48-595d-4e29-ab6e-eaec806cc004/ddbv3yv-2fc70379-e3b9-45c5-8636-8850a99ba565.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcLzJjNzI3ZTQ4LTU5NWQtNGUyOS1hYjZlLWVhZWM4MDZjYzAwNFwvZGRidjN5di0yZmM3MDM3OS1lM2I5LTQ1YzUtODYzNi04ODUwYTk5YmE1NjUucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.Mtw8z49UBVUyKqKXfZv7S5E-zY2Kor9kyIPRNDLhYsA",
+                            "edited": "false"
+                        };
 
-            const newChannelRef = push(ref(db, "servers/" + urlParams.get('server') + "/channels/" + newChannelName));
-            set(newChannelRef, message).then(function () {
-                console.log("then!");
-                // set new search params
-                const myParams = new URLSearchParams(window.location.search);
-                myParams.set('channel', sanitize(newChannelName));
-                window.location.search = myParams;
-                tearDown();
-                init();
-            });
+                        const newChannelRef = push(ref(db, "servers/" + urlParams.get('server') + "/channels/" + newChannelName));
+                        set(newChannelRef, message).then(function () {
+                            console.log("then!");
+                            // set new search params
+                            const myParams = new URLSearchParams(window.location.search);
+                            myParams.set('channel', sanitize(newChannelName));
+                            window.location.search = myParams;
+                            tearDown();
+                            init();
+                        });
+                    }
+                });
         })
     })
-    // set new search params, this is problematic here
-    // const myParams = new URLSearchParams(window.location.search);
-    // myParams.set('server', sanitize(serverName));
-    // myParams.set('channel', sanitize(channelName));
-    // window.location.search = myParams;
 }
 
 // stolen from https://stackoverflow.com/questions/847185/convert-a-unix-timestamp-to-time-in-javascript
 function timeConverter(timestamp) {
     const a = new Date(timestamp);
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May',
+        'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const year = a.getFullYear();
     const month = months[a.getMonth()];
     const date = a.getDate();
