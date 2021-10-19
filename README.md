@@ -12,4 +12,4 @@ Login or create an account using the provided forms. also note that if you forge
 
 Administrators have the ability to delete (but not edit) other's messages; only you (the user) can delete and edit your own messages. Both of these operations can be accomplished by clicking on the "x" and the pencil icon, respectively.
 
-Logging out can be accomplished by cliking on the gear icon on the bottom left side of the chat window.
+Logging out can be accomplished by clicking on the gear icon on the bottom left side of the chat window.
