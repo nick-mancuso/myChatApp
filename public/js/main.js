@@ -365,6 +365,7 @@ fbauth.onAuthStateChanged(authorize, userInfo => {
                     init();
                 } else {
                     console.log("ss is null dude");
+                    user = userInfo;
                     init();
                 }
             });
