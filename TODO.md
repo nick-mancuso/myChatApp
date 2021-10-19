@@ -1,4 +1,0 @@
- - let users create new channel
- - email resets for forgotten passwords
- - create channel pages for linking
- - dots in password field
