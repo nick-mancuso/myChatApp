@@ -520,7 +520,7 @@ function init() {
                     if (ss.exists()) {
                         //server exists
                         $("#newServerForm").remove();
-                        alert("A server named '" + newServerName + "' already exists!");
+                        alert("A server named '" + newServerName + "' already exists or is not a valid server name!");
                     } else {
                         // new server
                         $("#newServerForm").remove();
@@ -556,7 +556,6 @@ function init() {
                             tearDown();
                             init();
                         });
-                        $("#newServerForm").remove();
                     }
                 });
         })
@@ -589,7 +588,7 @@ function init() {
                     if (ss.exists()) {
                         // channel exists already
                         $("#newChannelForm").remove();
-                        alert("A channel named '" + newChannelName + "' exists already!");
+                        alert("A channel named '" + newChannelName + "' exists already or is not a valid channel name!");
                     } else {
                         // make new channel
                         $("#newChannelForm").remove();
